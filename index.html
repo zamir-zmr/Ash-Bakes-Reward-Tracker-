@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ash Bakes - Staff Reward & Order Tracker v7</title>
+    <title>Ash Bakes - Staff Reward & Order Tracker v11</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -18,78 +18,78 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b1329; color: #f8fafc; }
         .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .glass-nav { background: rgba(11, 19, 41, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 4px; }
         .modal-animate { transition: all 0.15s ease-in-out; }
     </style>
 </head>
 <body class="min-h-screen pb-8 custom-scrollbar">
 
-    <!-- Top Navigation (Compact) -->
-    <nav class="sticky top-0 z-40 glass-nav py-2.5 px-3 sm:px-6 mb-3">
+    <!-- Top Navigation -->
+    <nav class="sticky top-0 z-40 glass-nav py-3.5 px-4 sm:px-8 mb-4">
         <div class="max-w-7xl mx-auto flex flex-row justify-between items-center gap-2">
-            <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 font-black text-xl shadow-md shadow-amber-500/20">
+            <div class="flex items-center gap-3">
+                <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 font-black text-3xl p-2.5 shadow-lg shadow-amber-500/20">
                     <i class="fa-solid fa-cookie-bite"></i>
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-200 to-amber-300 bg-clip-text text-transparent leading-none">Ash Bakes</h1>
-                    <p class="text-[9px] text-amber-400 font-bold tracking-wider uppercase mt-0.5">Reward Tracker v7</p>
+                    <h1 class="font-extrabold text-xl sm:text-2xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-amber-300 bg-clip-text text-transparent leading-none">Ash Bakes</h1>
+                    <p class="text-xs text-amber-400 font-bold tracking-wider uppercase mt-1">Reward Tracker v11</p>
                 </div>
             </div>
             
-            <div class="flex items-center gap-2">
-                <button onclick="openStaffModal()" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700 flex items-center gap-1.5">
-                    <i class="fa-solid fa-users text-amber-400"></i> Staff
+            <div class="flex items-center gap-3">
+                <button onclick="openStaffModal()" class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700 flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-users text-amber-400 text-lg"></i> Staff
                 </button>
-                <button onclick="openOrderModal()" class="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 transition shadow-md shadow-amber-500/20 flex items-center gap-1.5">
-                    <i class="fa-solid fa-plus text-slate-950"></i> New Order
+                <button onclick="openOrderModal()" class="px-4 py-2.5 text-xs sm:text-sm font-extrabold rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 transition shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                    <i class="fa-solid fa-plus text-slate-950 text-lg"></i> New Order
                 </button>
             </div>
         </div>
     </nav>
 
     <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-3 sm:px-6 space-y-3">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 space-y-4">
         
         <!-- Global Date Filter Controls -->
-        <div class="glass-card p-2.5 rounded-xl flex flex-wrap justify-between items-center gap-2 border border-amber-500/20">
-            <div class="flex items-center gap-1.5">
-                <i class="fa-solid fa-filter text-amber-400 text-xs"></i>
-                <span class="text-[11px] font-bold text-slate-200 tracking-wider">FILTER:</span>
+        <div class="glass-card p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-3 border border-amber-500/20">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-filter text-amber-400 text-lg"></i>
+                <span class="text-xs font-extrabold text-slate-200 tracking-wider">FILTER:</span>
             </div>
-            <div class="flex items-center gap-1.5 flex-wrap">
-                <button onclick="setDateRange('ALL')" id="filter-btn-ALL" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-500 text-slate-950">All Time</button>
-                <button onclick="setDateRange('TODAY')" id="filter-btn-TODAY" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Today</button>
-                <button onclick="setDateRange('YESTERDAY')" id="filter-btn-YESTERDAY" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Yesterday</button>
-                <button onclick="setDateRange('MONTH')" id="filter-btn-MONTH" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">This Month</button>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="setDateRange('ALL')" id="filter-btn-ALL" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">All Time</button>
+                <button onclick="setDateRange('TODAY')" id="filter-btn-TODAY" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">Today</button>
+                <button onclick="setDateRange('YESTERDAY')" id="filter-btn-YESTERDAY" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">Yesterday</button>
+                <button onclick="setDateRange('MONTH')" id="filter-btn-MONTH" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">This Month</button>
                 
-                <div class="flex items-center gap-1 bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-700">
-                    <input type="date" id="date-custom-start" onchange="setDateRange('CUSTOM')" class="bg-transparent text-[11px] text-slate-300 focus:outline-none">
-                    <span class="text-[10px] text-slate-500">to</span>
-                    <input type="date" id="date-custom-end" onchange="setDateRange('CUSTOM')" class="bg-transparent text-[11px] text-slate-300 focus:outline-none">
+                <div class="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-700">
+                    <input type="date" id="date-custom-start" onchange="setDateRange('CUSTOM')" class="bg-transparent text-xs text-slate-300 focus:outline-none">
+                    <span class="text-xs text-slate-500">to</span>
+                    <input type="date" id="date-custom-end" onchange="setDateRange('CUSTOM')" class="bg-transparent text-xs text-slate-300 focus:outline-none">
                 </div>
             </div>
         </div>
 
-        <!-- 1. ACTIVE ORDERS GRID SECTION - AT VERY TOP -->
-        <div class="glass-card p-3 sm:p-4 rounded-xl border border-amber-500/30 shadow-xl">
+        <!-- 1. ACTIVE ORDERS GRID SECTION -->
+        <div class="glass-card p-4 rounded-xl border border-amber-500/30 shadow-xl">
             <div class="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-slate-800">
-                <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                    <i class="fa-solid fa-boxes-stacked text-amber-400"></i> Active Orders
+                <h2 class="text-base font-bold text-slate-200 flex items-center gap-2.5">
+                    <i class="fa-solid fa-boxes-stacked text-amber-400 text-xl"></i> Active Orders
                 </h2>
 
                 <div class="flex items-center gap-2 flex-wrap">
-                    <div class="flex items-center gap-1">
-                        <label class="text-[10px] text-slate-400 font-semibold uppercase">Staff:</label>
-                        <select id="filter-staff" onchange="renderOrders()" class="bg-slate-800 text-[11px] text-slate-200 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
+                    <div class="flex items-center gap-1.5">
+                        <label class="text-xs text-slate-400 font-bold uppercase">Staff:</label>
+                        <select id="filter-staff" onchange="renderOrders()" class="bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
                             <option value="ALL">All Staff</option>
                         </select>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <label class="text-[10px] text-slate-400 font-semibold uppercase">Status:</label>
-                        <select id="filter-status" onchange="renderOrders()" class="bg-slate-800 text-[11px] text-slate-200 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
+                    <div class="flex items-center gap-1.5">
+                        <label class="text-xs text-slate-400 font-bold uppercase">Status:</label>
+                        <select id="filter-status" onchange="renderOrders()" class="bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
                             <option value="ALL">All Status</option>
                             <option value="Pending">Pending Pickup</option>
                             <option value="Picked Up">Picked Up</option>
@@ -99,73 +99,73 @@
             </div>
 
             <!-- Horizontal 2-Column Grid -->
-            <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                <!-- Dynamic Compact Order Cards -->
+            <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- Dynamic Order Cards -->
             </div>
         </div>
 
         <!-- Key Metrics Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-            <div class="glass-card p-3 rounded-xl">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Revenue</span>
-                    <i class="fa-solid fa-coins text-emerald-400 text-xs"></i>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="glass-card p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Revenue</span>
+                    <i class="fa-solid fa-coins text-emerald-400 text-2xl"></i>
                 </div>
-                <div class="text-lg font-bold text-emerald-400" id="stat-total-revenue">0.000 <span class="text-xs text-emerald-500">OMR</span></div>
+                <div class="text-xl font-bold text-emerald-400" id="stat-total-revenue">0.000 <span class="text-xs text-emerald-500">OMR</span></div>
             </div>
 
-            <div class="glass-card p-3 rounded-xl">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Commissions</span>
-                    <i class="fa-solid fa-hand-holding-dollar text-amber-400 text-xs"></i>
+            <div class="glass-card p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Commissions</span>
+                    <i class="fa-solid fa-hand-holding-dollar text-amber-400 text-2xl"></i>
                 </div>
-                <div class="text-lg font-bold text-amber-400" id="stat-total-commission">0.000 <span class="text-xs text-amber-500">OMR</span></div>
+                <div class="text-xl font-bold text-amber-400" id="stat-total-commission">0.000 <span class="text-xs text-amber-500">OMR</span></div>
             </div>
 
-            <div class="glass-card p-3 rounded-xl">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Orders</span>
-                    <i class="fa-solid fa-box-archive text-blue-400 text-xs"></i>
+            <div class="glass-card p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Orders</span>
+                    <i class="fa-solid fa-box-archive text-blue-400 text-2xl"></i>
                 </div>
-                <div class="text-lg font-bold text-slate-100" id="stat-total-orders">0</div>
-                <p class="text-[9px] text-slate-400" id="stat-pending-orders">0 Pending Pickups</p>
+                <div class="text-xl font-bold text-slate-100" id="stat-total-orders">0</div>
+                <p class="text-xs text-slate-400 mt-0.5" id="stat-pending-orders">0 Pending Pickups</p>
             </div>
 
-            <div class="glass-card p-3 rounded-xl">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Staff</span>
-                    <i class="fa-solid fa-user-gear text-purple-400 text-xs"></i>
+            <div class="glass-card p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Active Staff</span>
+                    <i class="fa-solid fa-user-gear text-purple-400 text-2xl"></i>
                 </div>
-                <div class="text-lg font-bold text-purple-300" id="stat-active-staff">0</div>
+                <div class="text-xl font-bold text-purple-300" id="stat-active-staff">0</div>
             </div>
         </div>
 
         <!-- Staff Individual Dashboards -->
-        <div class="glass-card p-3.5 rounded-xl">
-            <h2 class="text-xs font-bold text-slate-200 mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
-                <i class="fa-solid fa-id-card-clip text-amber-400"></i> Staff Earnings Breakdown
+        <div class="glass-card p-4 rounded-xl">
+            <h2 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2 uppercase tracking-wider">
+                <i class="fa-solid fa-id-card-clip text-amber-400 text-xl"></i> Staff Earnings Breakdown
             </h2>
-            <div id="staff-dashboards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            <div id="staff-dashboards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <!-- Dynamic per-staff cards -->
             </div>
         </div>
 
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div class="glass-card p-3.5 rounded-xl lg:col-span-2">
-                <h2 class="text-xs font-bold text-slate-200 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
-                    <i class="fa-solid fa-chart-column text-amber-400"></i> Staff Commission Comparison
+            <div class="glass-card p-4 rounded-xl lg:col-span-2">
+                <h2 class="text-sm font-bold text-slate-200 mb-2 flex items-center gap-2 uppercase tracking-wider">
+                    <i class="fa-solid fa-chart-column text-amber-400 text-xl"></i> Staff Commission Comparison
                 </h2>
-                <div class="h-44 relative">
+                <div class="h-48 relative">
                     <canvas id="staffChart"></canvas>
                 </div>
             </div>
 
-            <div class="glass-card p-3.5 rounded-xl">
-                <h2 class="text-xs font-bold text-slate-200 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
-                    <i class="fa-solid fa-chart-pie text-amber-400"></i> Pickup Status
+            <div class="glass-card p-4 rounded-xl">
+                <h2 class="text-sm font-bold text-slate-200 mb-2 flex items-center gap-2 uppercase tracking-wider">
+                    <i class="fa-solid fa-chart-pie text-amber-400 text-xl"></i> Pickup Status
                 </h2>
-                <div class="h-44 relative flex items-center justify-center">
+                <div class="h-48 relative flex items-center justify-center">
                     <canvas id="orderTypeChart"></canvas>
                 </div>
             </div>
@@ -173,84 +173,113 @@
 
     </main>
 
-    <!-- Modal: Add / Manage Staff -->
-    <div id="modal-staff" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 modal-animate">
-        <div class="glass-card w-full max-w-sm p-4 rounded-xl border border-slate-700 shadow-2xl">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-xs font-bold text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-user-plus text-amber-400"></i> Manage Staff
-                </h3>
-                <button onclick="closeStaffModal()" class="text-slate-400 hover:text-white text-base">&times;</button>
+    <!-- Modal: Add / Manage Staff (FULL SCREEN / NO INNER SCROLL / DYNAMIC EXPANDING GRID / PROMINENT TOP-RIGHT RED CROSS BUTTON WITH HEADER) -->
+    <div id="modal-staff" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto modal-animate">
+        <div class="glass-card w-full max-w-6xl p-5 sm:p-7 rounded-2xl border border-amber-500/30 shadow-2xl flex flex-col my-auto relative">
+            
+            <!-- Modal Header aligned cleanly with Red Cross Button on the Right -->
+            <div class="flex justify-between items-center mb-5 pb-4 border-b border-slate-800/80">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl border border-amber-500/20 shadow-md">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg sm:text-2xl font-black text-slate-100 flex items-center gap-2 tracking-tight">
+                            Staff Manager Layout
+                        </h3>
+                        <p class="text-xs sm:text-sm text-slate-400 font-medium">Add staff & view complete team layout at once (No Scroll View)</p>
+                    </div>
+                </div>
+
+                <!-- DEDICATED PROMINENT TOP RIGHT RED CROSS ❌ BUTTON -->
+                <button onclick="closeStaffModal()" title="Close Staff Manager" class="w-11 h-11 rounded-xl bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-400 flex items-center justify-center text-2xl transition border border-rose-500/30 shadow-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
             
-            <form id="form-add-staff" onsubmit="handleAddStaff(event)" class="mb-4 flex gap-2">
-                <input type="text" id="input-staff-name" required placeholder="Enter staff name..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
-                <button type="submit" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition">Add</button>
+            <!-- Input Form Section -->
+            <form id="form-add-staff" onsubmit="handleAddStaff(event)" class="mb-5 bg-slate-900/90 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row gap-3 shadow-md">
+                <div class="flex-1 relative">
+                    <i class="fa-solid fa-user-plus text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 text-xl"></i>
+                    <input type="text" id="input-staff-name" required placeholder="Enter new staff full name..." class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-12 pr-4 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 transition">
+                </div>
+                <button type="submit" class="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-extrabold px-7 py-3 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-plus text-slate-950 text-lg"></i> Add Staff
+                </button>
             </form>
 
-            <div class="text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Existing Staff</div>
-            <div id="modal-staff-list" class="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
-                <!-- Staff list items -->
+            <!-- Staff List Container (EXPANDED GRID - NO INNER SCROLL - ALL STAFF VISIBLE TOGETHER) -->
+            <div class="w-full">
+                <div class="flex justify-between items-center mb-3 px-1">
+                    <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-amber-400 text-lg"></i> All Staff Members (<span id="modal-staff-count" class="text-amber-400 font-black text-sm">0</span>)
+                    </span>
+                </div>
+                <!-- FULL GRID DISPLAY FOR ALL STAFF AT ONCE -->
+                <div id="modal-staff-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                    <!-- Expanded Staff Cards -->
+                </div>
             </div>
+
         </div>
     </div>
 
     <!-- Modal: Create / Edit Order -->
     <div id="modal-order" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 modal-animate">
-        <div class="glass-card w-full max-w-md p-4 rounded-xl border border-slate-700 shadow-2xl">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-xs font-bold text-slate-100 flex items-center gap-1.5" id="order-modal-title">
-                    <i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order
+        <div class="glass-card w-full max-w-md p-5 rounded-2xl border border-slate-700 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
+                <h3 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2" id="order-modal-title">
+                    <i class="fa-solid fa-cart-plus text-amber-400 text-xl"></i> Create New Order
                 </h3>
-                <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white text-base">&times;</button>
+                <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
             </div>
 
-            <form id="form-add-order" onsubmit="handleSaveOrder(event)" class="space-y-2.5">
+            <form id="form-add-order" onsubmit="handleSaveOrder(event)" class="space-y-3">
                 <input type="hidden" id="edit-order-id" value="">
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Staff Member</label>
-                    <select id="order-staff-id" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                    <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Staff Member</label>
+                    <select id="order-staff-id" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
                         <!-- Dynamic options -->
                     </select>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Customer Name</label>
-                        <input type="text" id="order-customer-name" required placeholder="e.g. Salim" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Customer Name</label>
+                        <input type="text" id="order-customer-name" required placeholder="e.g. Salim" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Customer Phone</label>
-                        <input type="tel" id="order-customer-phone" required placeholder="968xxxxxxx" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Customer Phone</label>
+                        <input type="tel" id="order-customer-phone" required placeholder="968xxxxxxx" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Amount (OMR)</label>
-                        <input type="number" step="0.100" min="0.100" id="order-amount" required oninput="previewCommission()" placeholder="20.000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Amount (OMR)</label>
+                        <input type="number" step="0.100" min="0.100" id="order-amount" required oninput="previewCommission()" placeholder="20.000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Pickup Time</label>
-                        <input type="datetime-local" id="order-pickup-time" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Pickup Time</label>
+                        <input type="datetime-local" id="order-pickup-time" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Notes / Items</label>
-                    <input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                    <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Notes / Items</label>
+                    <input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
                 </div>
 
                 <!-- Commission Preview -->
-                <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2 flex justify-between items-center text-[11px]">
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 flex justify-between items-center text-xs">
                     <span class="text-slate-300 font-medium">Estimated Reward:</span>
                     <span id="commission-preview" class="font-bold text-amber-400">0.000 OMR (0 Baisa)</span>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-1">
-                    <button type="button" onclick="closeOrderModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
-                    <button type="submit" id="order-submit-btn" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-xs transition">Save Order</button>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" id="order-submit-btn" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2 rounded-xl text-xs sm:text-sm transition">Save Order</button>
                 </div>
             </form>
         </div>
@@ -258,15 +287,15 @@
 
     <!-- Custom Confirmation Modal -->
     <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 modal-animate">
-        <div class="glass-card w-full max-w-xs p-4 rounded-xl border border-slate-700 shadow-2xl text-center">
-            <div class="w-10 h-10 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-2 text-lg">
+        <div class="glass-card w-full max-w-xs p-5 rounded-2xl border border-slate-700 shadow-2xl text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 text-2xl">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
-            <h3 class="text-xs font-bold text-slate-100 mb-1" id="confirm-title">Confirm Action</h3>
-            <p class="text-[11px] text-slate-400 mb-4" id="confirm-message">Are you sure you want to proceed?</p>
-            <div class="flex justify-center gap-2">
-                <button id="confirm-btn-cancel" onclick="closeConfirmModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 transition">Cancel</button>
-                <button id="confirm-btn-action" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 hover:bg-rose-400 text-white transition">Delete</button>
+            <h3 class="text-sm font-bold text-slate-100 mb-1" id="confirm-title">Confirm Action</h3>
+            <p class="text-xs text-slate-400 mb-5" id="confirm-message">Are you sure you want to proceed?</p>
+            <div class="flex justify-center gap-2.5">
+                <button id="confirm-btn-cancel" onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition">Cancel</button>
+                <button id="confirm-btn-action" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-500 hover:bg-rose-400 text-white transition">Delete</button>
             </div>
         </div>
     </div>
@@ -318,13 +347,21 @@
 
         function setupRealtimeListeners() {
             if (!db) return;
+            // Realtime sync for staff
             db.collection("staff").onSnapshot(snapshot => {
                 if (!snapshot.empty) {
                     staffMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     saveStaffLocal();
-                    updateUI();
+                } else if (snapshot.empty && staffMembers.length > 0) {
+                    staffMembers.forEach(s => db.collection("staff").doc(s.id).set(s));
+                }
+                updateUI();
+                if (!document.getElementById('modal-staff').classList.contains('hidden')) {
+                    renderModalStaffList();
                 }
             });
+
+            // Realtime sync for orders
             db.collection("orders").onSnapshot(snapshot => {
                 if (!snapshot.empty) {
                     orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -337,12 +374,12 @@
         function setDateRange(rangeType) {
             activeDateFilter = rangeType;
             document.querySelectorAll('.date-filter-btn').forEach(btn => {
-                btn.className = 'date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700';
+                btn.className = 'date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700';
             });
 
             const activeBtn = document.getElementById(`filter-btn-${rangeType}`);
             if (activeBtn) {
-                activeBtn.className = 'date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-500 text-slate-950';
+                activeBtn.className = 'date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950';
             }
             updateUI();
         }
@@ -374,7 +411,7 @@
             });
         }
 
-        // INSTANT UI CLOSING MODALS
+        // Modal triggers
         function openStaffModal() {
             renderModalStaffList();
             document.getElementById('modal-staff').classList.remove('hidden');
@@ -394,7 +431,7 @@
                 const order = orders.find(o => o.id === orderIdToEdit);
                 if (order) {
                     editIdInput.value = order.id;
-                    titleEl.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Order Record';
+                    titleEl.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400 text-xl"></i> Edit Order Record';
                     submitBtn.textContent = 'Update Order';
 
                     document.getElementById('order-staff-id').value = order.staffId;
@@ -407,7 +444,7 @@
                 }
             } else {
                 editIdInput.value = '';
-                titleEl.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order';
+                titleEl.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400 text-xl"></i> Create New Order';
                 submitBtn.textContent = 'Save Order';
                 document.getElementById('form-add-order').reset();
                 previewCommission();
@@ -470,7 +507,7 @@
             }
         }
 
-        // Staff Handlers with INSTANT Popup Close & Optimistic Update
+        // Staff Handlers
         async function handleAddStaff(e) {
             e.preventDefault();
             const nameInput = document.getElementById('input-staff-name');
@@ -479,14 +516,16 @@
 
             const newStaff = { id: 'stf_' + Date.now(), name: name, createdAt: Date.now() };
             
-            // INSTANT CLOSE & UPDATE UI FIRST
-            closeStaffModal();
             staffMembers.push(newStaff);
             saveStaffLocal();
+            
+            renderModalStaffList();
             updateUI();
+            
+            nameInput.value = '';
 
             if (db) {
-                db.collection("staff").doc(newStaff.id).set(newStaff).catch(err => console.error(err));
+                db.collection("staff").doc(newStaff.id).set(newStaff).catch(err => console.error("Firebase sync error:", err));
             }
         }
 
@@ -501,32 +540,49 @@
         async function executeDeleteStaff(staffId) {
             staffMembers = staffMembers.filter(s => s.id !== staffId);
             saveStaffLocal();
+            renderModalStaffList();
             updateUI();
 
             if (db) {
-                db.collection("staff").doc(staffId).delete().catch(err => console.error(err));
+                db.collection("staff").doc(staffId).delete().catch(err => console.error("Firebase delete error:", err));
             }
         }
 
         function renderModalStaffList() {
             const list = document.getElementById('modal-staff-list');
+            const countEl = document.getElementById('modal-staff-count');
+            countEl.textContent = staffMembers.length;
+            
             list.innerHTML = '';
             if (staffMembers.length === 0) {
-                list.innerHTML = '<div class="text-slate-500 text-[11px] py-1">No staff members found.</div>';
+                list.innerHTML = '<div class="text-slate-500 text-xs py-4 text-center col-span-full">No staff members found. Add one above!</div>';
                 return;
             }
             staffMembers.forEach(s => {
+                const stfOrders = orders.filter(o => o.staffId === s.id);
+                const totalSales = stfOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
+                
                 const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800';
+                div.className = 'flex justify-between items-center bg-slate-900/90 hover:bg-slate-800/90 px-4 py-3 rounded-xl border border-slate-800 transition shadow-sm';
                 div.innerHTML = `
-                    <span class="font-medium text-slate-200 text-xs">${s.name}</span>
-                    <button type="button" onclick="requestDeleteStaff('${s.id}')" class="text-rose-400 hover:text-rose-300 text-xs px-1.5 py-0.5 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 font-extrabold flex items-center justify-center text-base border border-amber-500/20">
+                            ${s.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <span class="font-bold text-slate-100 text-xs sm:text-sm block">${s.name}</span>
+                            <span class="text-[11px] text-slate-400 font-medium">${stfOrders.length} Orders • ${totalSales.toFixed(3)} OMR</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="requestDeleteStaff('${s.id}')" title="Delete Staff" class="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-base p-2 rounded-xl transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 `;
                 list.appendChild(div);
             });
         }
 
-        // Order Handlers with INSTANT Popup Close & Optimistic Update
+        // Order Handlers
         async function handleSaveOrder(e) {
             e.preventDefault();
             const editId = document.getElementById('edit-order-id').value;
@@ -540,7 +596,6 @@
             const commission = calculateCommission(amount);
             const staff = staffMembers.find(s => s.id === staffId);
 
-            // INSTANT CLOSE MODAL & RENDER UI
             closeOrderModal();
 
             if (editId) {
@@ -649,7 +704,7 @@
             grid.innerHTML = '';
 
             if (staffMembers.length === 0) {
-                grid.innerHTML = '<div class="text-[11px] text-slate-500 py-1 col-span-full">No staff members.</div>';
+                grid.innerHTML = '<div class="text-xs text-slate-500 py-2 col-span-full">No staff members found.</div>';
                 return;
             }
 
@@ -658,28 +713,27 @@
                 const orderCount = stfOrders.length;
                 const totalRev = stfOrders.reduce((acc, curr) => acc + (curr.amount || 0), 0);
                 const totalComm = stfOrders.reduce((acc, curr) => acc + (curr.commission || 0), 0);
-                const baisa = Math.round(totalComm * 1000);
 
                 const card = document.createElement('div');
-                card.className = 'glass-card p-2.5 rounded-lg border border-slate-700/85 hover:border-amber-500/40 transition';
+                card.className = 'glass-card p-3 sm:p-4 rounded-xl border border-slate-700/85 hover:border-amber-500/40 transition shadow-md';
                 card.innerHTML = `
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 font-bold flex items-center justify-center text-xs border border-amber-500/20">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 font-bold flex items-center justify-center text-xs border border-amber-500/20">
                                 ${stf.name.charAt(0).toUpperCase()}
                             </div>
-                            <h3 class="font-bold text-slate-100 text-xs">${stf.name}</h3>
+                            <h3 class="font-bold text-slate-100 text-xs sm:text-sm">${stf.name}</h3>
                         </div>
                         <span class="bg-slate-800 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-700">${orderCount} Orders</span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
                         <div>
-                            <span class="text-[9px] text-slate-400 uppercase block">Sales</span>
+                            <span class="text-[9px] text-slate-400 uppercase block font-semibold">Sales</span>
                             <span class="font-bold text-slate-200">${totalRev.toFixed(3)} OMR</span>
                         </div>
                         <div>
-                            <span class="text-[9px] text-slate-400 uppercase block">Reward</span>
+                            <span class="text-[9px] text-slate-400 uppercase block font-semibold">Reward</span>
                             <span class="font-bold text-amber-400">${totalComm.toFixed(3)} OMR</span>
                         </div>
                     </div>
@@ -702,62 +756,61 @@
             });
 
             if (displayOrders.length === 0) {
-                container.innerHTML = '<div class="col-span-full p-4 text-center text-slate-500 text-xs">No matching orders found.</div>';
+                container.innerHTML = '<div class="col-span-full p-6 text-center text-slate-500 text-xs sm:text-sm">No matching orders found.</div>';
                 return;
             }
 
             displayOrders.forEach((o, index) => {
                 const isPickedUp = o.status === 'Picked Up';
-                const baisa = Math.round((o.commission || 0) * 1000);
                 const pickupDate = o.pickupTime ? new Date(o.pickupTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
 
                 const hasReward = (o.commission || 0) >= 0.9;
                 const rewardBadge = hasReward 
-                    ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold text-[9px]"><i class="fa-solid fa-gift"></i> Payout: 900 Baisa</span>`
-                    : `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-bold text-[9px]"><i class="fa-solid fa-circle-minus"></i> Payout: 0 Baisa</span>`;
+                    ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold text-[10px]"><i class="fa-solid fa-gift text-sm"></i> Payout: 900 Baisa</span>`
+                    : `<span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 font-bold text-[10px]"><i class="fa-solid fa-circle-minus text-sm"></i> Payout: 0 Baisa</span>`;
 
                 const card = document.createElement('div');
-                card.className = 'bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex flex-col justify-between hover:border-amber-500/40 transition shadow-md relative';
+                card.className = 'bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between hover:border-amber-500/40 transition shadow-md relative';
                 
                 card.innerHTML = `
-                    <div class="flex justify-between items-center mb-1.5 pb-1 border-b border-slate-800">
-                        <div class="flex items-center gap-1.5">
+                    <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
+                        <div class="flex items-center gap-2">
                             <span class="text-amber-400 font-bold text-xs">#${index + 1}</span>
-                            <span class="text-[9px] text-slate-400 uppercase font-semibold">Staff:</span>
-                            <span class="text-xs font-bold text-amber-300 flex items-center gap-1">
-                                <i class="fa-solid fa-user-tie text-[9px]"></i> ${o.staffName}
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Staff:</span>
+                            <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-user-tie text-sm"></i> ${o.staffName}
                             </span>
                         </div>
                         
                         <div class="flex items-center gap-1">
-                            <button onclick="openOrderModal('${o.id}')" title="Edit Order" class="text-amber-400 hover:text-amber-300 transition text-[11px] p-1 rounded hover:bg-slate-800">
+                            <button onclick="openOrderModal('${o.id}')" title="Edit Order" class="text-amber-400 hover:text-amber-300 transition text-sm p-1.5 rounded-lg hover:bg-slate-800">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button onclick="requestDeleteOrder('${o.id}')" title="Delete Order" class="text-slate-500 hover:text-rose-400 transition text-[11px] p-1 rounded hover:bg-slate-800">
+                            <button onclick="requestDeleteOrder('${o.id}')" title="Delete Order" class="text-slate-500 hover:text-rose-400 transition text-sm p-1.5 rounded-lg hover:bg-slate-800">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div class="space-y-1 mb-2">
+                    <div class="space-y-1.5 mb-2.5">
                         <div class="flex justify-between items-baseline">
-                            <span class="text-xs font-bold text-slate-100 truncate max-w-[120px]">${o.customerName}</span>
-                            <span class="text-xs font-bold text-emerald-400">${(o.amount || 0).toFixed(3)} OMR</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[140px]">${o.customerName}</span>
+                            <span class="text-xs sm:text-sm font-bold text-emerald-400">${(o.amount || 0).toFixed(3)} OMR</span>
                         </div>
-                        <div class="flex justify-between text-[10px] text-slate-400">
-                            <span><i class="fa-solid fa-phone text-[8px]"></i> ${o.customerPhone}</span>
-                            <span><i class="fa-solid fa-clock text-[8px]"></i> ${pickupDate}</span>
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span><i class="fa-solid fa-phone text-xs"></i> ${o.customerPhone}</span>
+                            <span><i class="fa-solid fa-clock text-xs"></i> ${pickupDate}</span>
                         </div>
-                        ${o.notes ? `<div class="text-[10px] text-slate-400 bg-slate-950/50 p-1 rounded border border-slate-800/80"><i class="fa-solid fa-note-sticky text-[9px] text-amber-400"></i> ${o.notes}</div>` : ''}
+                        ${o.notes ? `<div class="text-xs text-slate-400 bg-slate-950/50 p-1.5 rounded-lg border border-slate-800/80"><i class="fa-solid fa-note-sticky text-amber-400 text-xs"></i> ${o.notes}</div>` : ''}
                     </div>
 
-                    <div class="flex justify-between items-center pt-1.5 border-t border-slate-800">
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-800">
                         <div>
                             ${rewardBadge}
                         </div>
 
-                        <button onclick="toggleOrderStatus('${o.id}')" class="px-2 py-1 rounded text-[9px] font-bold tracking-wide transition flex items-center gap-1 ${isPickedUp ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30'}">
-                            ${isPickedUp ? '<i class="fa-solid fa-circle-check"></i> Picked Up' : '<i class="fa-solid fa-clock"></i> Pending'}
+                        <button onclick="toggleOrderStatus('${o.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide transition flex items-center gap-1.5 ${isPickedUp ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30'}">
+                            ${isPickedUp ? '<i class="fa-solid fa-circle-check text-sm"></i> Picked Up' : '<i class="fa-solid fa-clock text-sm"></i> Pending'}
                         </button>
                     </div>
                 `;
