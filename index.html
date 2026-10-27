@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ash Bakes - Staff Reward & Order Tracker v6</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b1329; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-nav { background: rgba(11, 19, 41, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+        .modal-animate { transition: all 0.2s ease-in-out; }
+    </style>
+</head>
+<body class="min-h-screen pb-8 custom-scrollbar">
+
+    <!-- Top Navigation (Compact Padding) -->
+    <nav class="sticky top-0 z-40 glass-nav py-2.5 px-3 sm:px-6 mb-3">
+        <div class="max-w-7xl mx-auto flex flex-row justify-between items-center gap-2">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 font-black text-xl shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-cookie-bite"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-200 to-amber-300 bg-clip-text text-transparent leading-none">Ash Bakes</h1>
+                    <p class="text-[9px] text-amber-400 font-bold tracking-wider uppercase mt-0.5">Reward Tracker v6</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="openStaffModal()" class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-amber-400"></i> Staff
+                </button>
+                <button onclick="openOrderModal()" class="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 transition shadow-md shadow-amber-500/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus text-slate-950"></i> New Order
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container (Tight Vertical Spacing & Minimal Margins) -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 space-y-3">
+        
+        <!-- Global Date Filter Controls (Compact Layout) -->
+        <div class="glass-card p-2.5 rounded-xl flex flex-wrap justify-between items-center gap-2 border border-amber-500/20">
+            <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-filter text-amber-400 text-xs"></i>
+                <span class="text-[11px] font-bold text-slate-200 tracking-wider">FILTER:</span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="setDateRange('ALL')" id="filter-btn-ALL" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-500 text-slate-950">All Time</button>
+                <button onclick="setDateRange('TODAY')" id="filter-btn-TODAY" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Today</button>
+                <button onclick="setDateRange('YESTERDAY')" id="filter-btn-YESTERDAY" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">Yesterday</button>
+                <button onclick="setDateRange('MONTH')" id="filter-btn-MONTH" class="date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">This Month</button>
+                
+                <div class="flex items-center gap-1 bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-700">
+                    <input type="date" id="date-custom-start" onchange="setDateRange('CUSTOM')" class="bg-transparent text-[11px] text-slate-300 focus:outline-none">
+                    <span class="text-[10px] text-slate-500">to</span>
+                    <input type="date" id="date-custom-end" onchange="setDateRange('CUSTOM')" class="bg-transparent text-[11px] text-slate-300 focus:outline-none">
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. ACTIVE ORDERS GRID SECTION - AT VERY TOP (Clean Header, No Extra Subtitle Text, Compressed Box Padding) -->
+        <div class="glass-card p-3 sm:p-4 rounded-xl border border-amber-500/30 shadow-xl">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-slate-800">
+                <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-stacked text-amber-400"></i> Active Orders
+                </h2>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <div class="flex items-center gap-1">
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase">Staff:</label>
+                        <select id="filter-staff" onchange="renderOrders()" class="bg-slate-800 text-[11px] text-slate-200 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
+                            <option value="ALL">All Staff</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase">Status:</label>
+                        <select id="filter-status" onchange="renderOrders()" class="bg-slate-800 text-[11px] text-slate-200 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
+                            <option value="ALL">All Status</option>
+                            <option value="Pending">Pending Pickup</option>
+                            <option value="Picked Up">Picked Up</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horizontal 2-Column Grid (Compressed Vertical Spacing) -->
+            <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <!-- Dynamic Compact Order Cards -->
+            </div>
+        </div>
+
+        <!-- Key Metrics Cards (Compact Grid) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <div class="glass-card p-3 rounded-xl">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Revenue</span>
+                    <i class="fa-solid fa-coins text-emerald-400 text-xs"></i>
+                </div>
+                <div class="text-lg font-bold text-emerald-400" id="stat-total-revenue">0.000 <span class="text-xs text-emerald-500">OMR</span></div>
+            </div>
+
+            <div class="glass-card p-3 rounded-xl">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Commissions</span>
+                    <i class="fa-solid fa-hand-holding-dollar text-amber-400 text-xs"></i>
+                </div>
+                <div class="text-lg font-bold text-amber-400" id="stat-total-commission">0.000 <span class="text-xs text-amber-500">OMR</span></div>
+            </div>
+
+            <div class="glass-card p-3 rounded-xl">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Orders</span>
+                    <i class="fa-solid fa-box-archive text-blue-400 text-xs"></i>
+                </div>
+                <div class="text-lg font-bold text-slate-100" id="stat-total-orders">0</div>
+                <p class="text-[9px] text-slate-400" id="stat-pending-orders">0 Pending Pickups</p>
+            </div>
+
+            <div class="glass-card p-3 rounded-xl">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Staff</span>
+                    <i class="fa-solid fa-user-gear text-purple-400 text-xs"></i>
+                </div>
+                <div class="text-lg font-bold text-purple-300" id="stat-active-staff">0</div>
+            </div>
+        </div>
+
+        <!-- Staff Individual Dashboards (Compact) -->
+        <div class="glass-card p-3.5 rounded-xl">
+            <h2 class="text-xs font-bold text-slate-200 mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
+                <i class="fa-solid fa-id-card-clip text-amber-400"></i> Staff Earnings Breakdown
+            </h2>
+            <div id="staff-dashboards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                <!-- Dynamic per-staff cards -->
+            </div>
+        </div>
+
+        <!-- Charts Section (Compact Height) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div class="glass-card p-3.5 rounded-xl lg:col-span-2">
+                <h2 class="text-xs font-bold text-slate-200 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
+                    <i class="fa-solid fa-chart-column text-amber-400"></i> Staff Commission Comparison
+                </h2>
+                <div class="h-44 relative">
+                    <canvas id="staffChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card p-3.5 rounded-xl">
+                <h2 class="text-xs font-bold text-slate-200 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
+                    <i class="fa-solid fa-chart-pie text-amber-400"></i> Pickup Status
+                </h2>
+                <div class="h-44 relative flex items-center justify-center">
+                    <canvas id="orderTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Add / Manage Staff -->
+    <div id="modal-staff" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 modal-animate">
+        <div class="glass-card w-full max-w-sm p-4 rounded-xl border border-slate-700 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-amber-400"></i> Manage Staff
+                </h3>
+                <button onclick="closeStaffModal()" class="text-slate-400 hover:text-white text-base">&times;</button>
+            </div>
+            
+            <form id="form-add-staff" onsubmit="handleAddStaff(event)" class="mb-4 flex gap-2">
+                <input type="text" id="input-staff-name" required placeholder="Enter staff name..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                <button type="submit" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition">Add</button>
+            </form>
+
+            <div class="text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Existing Staff</div>
+            <div id="modal-staff-list" class="space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
+                <!-- Staff list items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Create / Edit Order -->
+    <div id="modal-order" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 modal-animate">
+        <div class="glass-card w-full max-w-md p-4 rounded-xl border border-slate-700 shadow-2xl">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs font-bold text-slate-100 flex items-center gap-1.5" id="order-modal-title">
+                    <i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order
+                </h3>
+                <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white text-base">&times;</button>
+            </div>
+
+            <form id="form-add-order" onsubmit="handleSaveOrder(event)" class="space-y-2.5">
+                <input type="hidden" id="edit-order-id" value="">
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Staff Member</label>
+                    <select id="order-staff-id" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Customer Name</label>
+                        <input type="text" id="order-customer-name" required placeholder="e.g. Salim" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Customer Phone</label>
+                        <input type="tel" id="order-customer-phone" required placeholder="968xxxxxxx" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Amount (OMR)</label>
+                        <input type="number" step="0.100" min="0.100" id="order-amount" required oninput="previewCommission()" placeholder="20.000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Pickup Time</label>
+                        <input type="datetime-local" id="order-pickup-time" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-300 mb-0.5 uppercase">Notes / Items</label>
+                    <input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400">
+                </div>
+
+                <!-- Commission Preview -->
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2 flex justify-between items-center text-[11px]">
+                    <span class="text-slate-300 font-medium">Estimated Reward:</span>
+                    <span id="commission-preview" class="font-bold text-amber-400">0.000 OMR (0 Baisa)</span>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-1">
+                    <button type="button" onclick="closeOrderModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
+                    <button type="submit" id="order-submit-btn" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-1.5 rounded-lg text-xs transition">Save Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 modal-animate">
+        <div class="glass-card w-full max-w-xs p-4 rounded-xl border border-slate-700 shadow-2xl text-center">
+            <div class="w-10 h-10 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-2 text-lg">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-xs font-bold text-slate-100 mb-1" id="confirm-title">Confirm Action</h3>
+            <p class="text-[11px] text-slate-400 mb-4" id="confirm-message">Are you sure you want to proceed?</p>
+            <div class="flex justify-center gap-2">
+                <button id="confirm-btn-cancel" onclick="closeConfirmModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:bg-slate-800 transition">Cancel</button>
+                <button id="confirm-btn-action" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-500 hover:bg-rose-400 text-white transition">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQamkgnBESFuGEoHCoqtsn-hR-z1Gzh_s",
+            authDomain: "ashbakesrewardtracker.firebaseapp.com",
+            projectId: "ashbakesrewardtracker",
+            storageBucket: "ashbakesrewardtracker.firebasestorage.app",
+            messagingSenderId: "62622240064",
+            appId: "1:62622240064:web:cdceb080627e6d4ed7fea5"
+        };
+
+        // Initialize Firebase
+        let db = null;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } catch (e) {
+            console.warn("Firebase offline fallback mode enabled.", e);
+        }
+
+        // App States
+        let staffMembers = JSON.parse(localStorage.getItem('ash_staff') || '[]');
+        let orders = JSON.parse(localStorage.getItem('ash_orders') || '[]');
+        let activeDateFilter = 'ALL';
+
+        if (staffMembers.length === 0) {
+            staffMembers = [
+                { id: 'stf_1', name: 'Zamir Ansari', createdAt: Date.now() },
+                { id: 'stf_2', name: 'Sojib', createdAt: Date.now() }
+            ];
+            saveStaffLocal();
+        }
+
+        let staffChartInstance = null;
+        let orderChartInstance = null;
+        let confirmActionHandler = null;
+
+        // Commission Rule: >= 20.000 OMR = 0.900 OMR (900 Baisa), strictly < 20.000 OMR = 0.000 OMR
+        function calculateCommission(amountOMR) {
+            const amt = parseFloat(amountOMR) || 0;
+            return amt >= 20.000 ? 0.900 : 0.000;
+        }
+
+        function saveStaffLocal() { localStorage.setItem('ash_staff', JSON.stringify(staffMembers)); }
+        function saveOrdersLocal() { localStorage.setItem('ash_orders', JSON.stringify(orders)); }
+
+        function setupRealtimeListeners() {
+            if (!db) return;
+            db.collection("staff").onSnapshot(snapshot => {
+                if (!snapshot.empty) {
+                    staffMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    saveStaffLocal();
+                    updateUI();
+                }
+            });
+            db.collection("orders").onSnapshot(snapshot => {
+                if (!snapshot.empty) {
+                    orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    saveOrdersLocal();
+                    updateUI();
+                }
+            });
+        }
+
+        // Date Filter Logic
+        function setDateRange(rangeType) {
+            activeDateFilter = rangeType;
+            document.querySelectorAll('.date-filter-btn').forEach(btn => {
+                btn.className = 'date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700';
+            });
+
+            const activeBtn = document.getElementById(`filter-btn-${rangeType}`);
+            if (activeBtn) {
+                activeBtn.className = 'date-filter-btn px-2.5 py-1 rounded-md text-[11px] font-semibold bg-amber-500 text-slate-950';
+            }
+            updateUI();
+        }
+
+        function getFilteredOrders() {
+            return orders.filter(o => {
+                const orderTime = o.createdAt || Date.now();
+                const orderDate = new Date(orderTime);
+                const now = new Date();
+
+                if (activeDateFilter === 'TODAY') {
+                    return orderDate.toDateString() === now.toDateString();
+                } else if (activeDateFilter === 'YESTERDAY') {
+                    const yest = new Date();
+                    yest.setDate(now.getDate() - 1);
+                    return orderDate.toDateString() === yest.toDateString();
+                } else if (activeDateFilter === 'MONTH') {
+                    return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+                } else if (activeDateFilter === 'CUSTOM') {
+                    const startVal = document.getElementById('date-custom-start').value;
+                    const endVal = document.getElementById('date-custom-end').value;
+                    if (!startVal || !endVal) return true;
+                    const startDate = new Date(startVal);
+                    const endDate = new Date(endVal);
+                    endDate.setHours(23, 59, 59, 999);
+                    return orderDate >= startDate && orderDate <= endDate;
+                }
+                return true;
+            });
+        }
+
+        // Modal Controls
+        function openStaffModal() {
+            renderModalStaffList();
+            document.getElementById('modal-staff').classList.remove('hidden');
+        }
+        function closeStaffModal() {
+            document.getElementById('modal-staff').classList.add('hidden');
+            document.getElementById('input-staff-name').value = '';
+        }
+        function openOrderModal(orderIdToEdit = null) {
+            populateStaffSelect();
+            const editIdInput = document.getElementById('edit-order-id');
+            const titleEl = document.getElementById('order-modal-title');
+            const submitBtn = document.getElementById('order-submit-btn');
+
+            if (orderIdToEdit) {
+                const order = orders.find(o => o.id === orderIdToEdit);
+                if (order) {
+                    editIdInput.value = order.id;
+                    titleEl.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Order Record';
+                    submitBtn.textContent = 'Update Order';
+
+                    document.getElementById('order-staff-id').value = order.staffId;
+                    document.getElementById('order-customer-name').value = order.customerName;
+                    document.getElementById('order-customer-phone').value = order.customerPhone;
+                    document.getElementById('order-amount').value = order.amount;
+                    document.getElementById('order-pickup-time').value = order.pickupTime || '';
+                    document.getElementById('order-notes').value = order.notes || '';
+                    previewCommission();
+                }
+            } else {
+                editIdInput.value = '';
+                titleEl.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order';
+                submitBtn.textContent = 'Save Order';
+                document.getElementById('form-add-order').reset();
+                previewCommission();
+            }
+            document.getElementById('modal-order').classList.remove('hidden');
+        }
+        function closeOrderModal() {
+            document.getElementById('modal-order').classList.add('hidden');
+            document.getElementById('edit-order-id').value = '';
+            document.getElementById('form-add-order').reset();
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            confirmActionHandler = onConfirm;
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+        function closeConfirmModal() {
+            document.getElementById('modal-confirm').classList.add('hidden');
+            confirmActionHandler = null;
+        }
+
+        document.getElementById('confirm-btn-action').addEventListener('click', () => {
+            if (confirmActionHandler) confirmActionHandler();
+            closeConfirmModal();
+        });
+
+        function previewCommission() {
+            const val = document.getElementById('order-amount').value;
+            const comm = calculateCommission(val);
+            const baisa = Math.round(comm * 1000);
+            document.getElementById('commission-preview').textContent = `${comm.toFixed(3)} OMR (${baisa} Baisa)`;
+        }
+
+        function populateStaffSelect() {
+            const select = document.getElementById('order-staff-id');
+            const filterSelect = document.getElementById('filter-staff');
+            const currentFilterVal = filterSelect.value;
+            
+            select.innerHTML = '';
+            filterSelect.innerHTML = '<option value="ALL">All Staff</option>';
+
+            staffMembers.forEach(stf => {
+                const opt = document.createElement('option');
+                opt.value = stf.id;
+                opt.textContent = stf.name;
+                select.appendChild(opt);
+
+                const optFilter = document.createElement('option');
+                optFilter.value = stf.id;
+                optFilter.textContent = stf.name;
+                filterSelect.appendChild(optFilter);
+            });
+
+            if (staffMembers.some(s => s.id === currentFilterVal)) {
+                filterSelect.value = currentFilterVal;
+            } else {
+                filterSelect.value = 'ALL';
+            }
+        }
+
+        // Staff Handlers
+        async function handleAddStaff(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('input-staff-name');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            const newStaff = { id: 'stf_' + Date.now(), name: name, createdAt: Date.now() };
+            staffMembers.push(newStaff);
+            saveStaffLocal();
+
+            if (db) { try { await db.collection("staff").doc(newStaff.id).set(newStaff); } catch (e) {} }
+
+            nameInput.value = '';
+            renderModalStaffList();
+            updateUI();
+            closeStaffModal();
+        }
+
+        function requestDeleteStaff(staffId) {
+            showConfirmModal(
+                "Delete Staff Member?",
+                "Are you sure you want to remove this staff member?",
+                () => executeDeleteStaff(staffId)
+            );
+        }
+
+        async function executeDeleteStaff(staffId) {
+            staffMembers = staffMembers.filter(s => s.id !== staffId);
+            saveStaffLocal();
+
+            if (db) { try { await db.collection("staff").doc(staffId).delete(); } catch(e) {} }
+
+            renderModalStaffList();
+            updateUI();
+        }
+
+        function renderModalStaffList() {
+            const list = document.getElementById('modal-staff-list');
+            list.innerHTML = '';
+            if (staffMembers.length === 0) {
+                list.innerHTML = '<div class="text-slate-500 text-[11px] py-1">No staff members found.</div>';
+                return;
+            }
+            staffMembers.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800';
+                div.innerHTML = `
+                    <span class="font-medium text-slate-200 text-xs">${s.name}</span>
+                    <button type="button" onclick="requestDeleteStaff('${s.id}')" class="text-rose-400 hover:text-rose-300 text-xs px-1.5 py-0.5 transition"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // Order Handlers (Create & Modify)
+        async function handleSaveOrder(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-order-id').value;
+            const staffId = document.getElementById('order-staff-id').value;
+            const customerName = document.getElementById('order-customer-name').value.trim();
+            const customerPhone = document.getElementById('order-customer-phone').value.trim();
+            const amount = parseFloat(document.getElementById('order-amount').value) || 0;
+            const pickupTime = document.getElementById('order-pickup-time').value;
+            const notes = document.getElementById('order-notes').value.trim();
+
+            const commission = calculateCommission(amount);
+            const staff = staffMembers.find(s => s.id === staffId);
+
+            if (editId) {
+                const existingOrder = orders.find(o => o.id === editId);
+                if (existingOrder) {
+                    existingOrder.staffId = staffId;
+                    existingOrder.staffName = staff ? staff.name : 'Unknown';
+                    existingOrder.customerName = customerName;
+                    existingOrder.customerPhone = customerPhone;
+                    existingOrder.amount = amount;
+                    existingOrder.commission = commission;
+                    existingOrder.pickupTime = pickupTime;
+                    existingOrder.notes = notes;
+
+                    saveOrdersLocal();
+                    if (db) { try { await db.collection("orders").doc(editId).update(existingOrder); } catch (e) {} }
+                }
+            } else {
+                const newOrder = {
+                    id: 'ord_' + Date.now(),
+                    staffId: staffId,
+                    staffName: staff ? staff.name : 'Unknown',
+                    customerName: customerName,
+                    customerPhone: customerPhone,
+                    amount: amount,
+                    commission: commission,
+                    pickupTime: pickupTime,
+                    notes: notes,
+                    status: 'Pending',
+                    createdAt: Date.now()
+                };
+
+                orders.unshift(newOrder);
+                saveOrdersLocal();
+
+                if (db) { try { await db.collection("orders").doc(newOrder.id).set(newOrder); } catch (e) {} }
+            }
+
+            closeOrderModal();
+            updateUI();
+        }
+
+        async function toggleOrderStatus(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            order.status = order.status === 'Pending' ? 'Picked Up' : 'Pending';
+            saveOrdersLocal();
+
+            if (db) { try { await db.collection("orders").doc(orderId).update({ status: order.status }); } catch(e) {} }
+
+            updateUI();
+        }
+
+        function requestDeleteOrder(orderId) {
+            showConfirmModal(
+                "Delete Order Record?",
+                "Are you sure you want to delete this order?",
+                () => executeDeleteOrder(orderId)
+            );
+        }
+
+        async function executeDeleteOrder(orderId) {
+            orders = orders.filter(o => o.id !== orderId);
+            saveOrdersLocal();
+
+            if (db) { try { await db.collection("orders").doc(orderId).delete(); } catch(e) {} }
+
+            updateUI();
+        }
+
+        // Main UI Render Pipeline
+        function updateUI() {
+            populateStaffSelect();
+            const filteredOrders = getFilteredOrders();
+            renderMetrics(filteredOrders);
+            renderStaffDashboards(filteredOrders);
+            renderOrders(filteredOrders);
+            renderCharts(filteredOrders);
+        }
+
+        function renderMetrics(filteredOrders) {
+            let totalRev = 0;
+            let totalComm = 0;
+            let pendingCount = 0;
+
+            filteredOrders.forEach(o => {
+                totalRev += (o.amount || 0);
+                totalComm += (o.commission || 0);
+                if (o.status === 'Pending') pendingCount++;
+            });
+
+            document.getElementById('stat-total-revenue').innerHTML = `${totalRev.toFixed(3)} <span class="text-xs text-emerald-500 font-medium">OMR</span>`;
+            document.getElementById('stat-total-commission').innerHTML = `${totalComm.toFixed(3)} <span class="text-xs text-amber-500 font-medium">OMR</span>`;
+            document.getElementById('stat-total-orders').textContent = filteredOrders.length;
+            document.getElementById('stat-pending-orders').textContent = `${pendingCount} Pending Pickups`;
+            document.getElementById('stat-active-staff').textContent = staffMembers.length;
+        }
+
+        function renderStaffDashboards(filteredOrders) {
+            const grid = document.getElementById('staff-dashboards-grid');
+            grid.innerHTML = '';
+
+            if (staffMembers.length === 0) {
+                grid.innerHTML = '<div class="text-[11px] text-slate-500 py-1 col-span-full">No staff members.</div>';
+                return;
+            }
+
+            staffMembers.forEach(stf => {
+                const stfOrders = filteredOrders.filter(o => o.staffId === stf.id);
+                const orderCount = stfOrders.length;
+                const totalRev = stfOrders.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+                const totalComm = stfOrders.reduce((acc, curr) => acc + (curr.commission || 0), 0);
+                const baisa = Math.round(totalComm * 1000);
+
+                const card = document.createElement('div');
+                card.className = 'glass-card p-2.5 rounded-lg border border-slate-700/80 hover:border-amber-500/40 transition';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 font-bold flex items-center justify-center text-xs border border-amber-500/20">
+                                ${stf.name.charAt(0).toUpperCase()}
+                            </div>
+                            <h3 class="font-bold text-slate-100 text-xs">${stf.name}</h3>
+                        </div>
+                        <span class="bg-slate-800 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-700">${orderCount} Orders</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5 text-[11px] bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+                        <div>
+                            <span class="text-[9px] text-slate-400 uppercase block">Sales</span>
+                            <span class="font-bold text-slate-200">${totalRev.toFixed(3)} OMR</span>
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-slate-400 uppercase block">Reward</span>
+                            <span class="font-bold text-amber-400">${totalComm.toFixed(3)} OMR</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Render 2-Column Side-by-Side Horizontal Layout (Compressed Vertical Spacing, Compact Box)
+        function renderOrders(filteredOrders = getFilteredOrders()) {
+            const container = document.getElementById('orders-grid-container');
+            container.innerHTML = '';
+
+            const filterStaffId = document.getElementById('filter-staff').value;
+            const filterStatus = document.getElementById('filter-status').value;
+
+            const displayOrders = filteredOrders.filter(o => {
+                const matchStaff = filterStaffId === 'ALL' || o.staffId === filterStaffId;
+                const matchStatus = filterStatus === 'ALL' || o.status === filterStatus;
+                return matchStaff && matchStatus;
+            });
+
+            if (displayOrders.length === 0) {
+                container.innerHTML = '<div class="col-span-full p-4 text-center text-slate-500 text-xs">No matching orders found.</div>';
+                return;
+            }
+
+            displayOrders.forEach((o, index) => {
+                const isPickedUp = o.status === 'Picked Up';
+                const baisa = Math.round((o.commission || 0) * 1000);
+                const pickupDate = o.pickupTime ? new Date(o.pickupTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+
+                const hasReward = (o.commission || 0) >= 0.9;
+                const rewardBadge = hasReward 
+                    ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold text-[9px]"><i class="fa-solid fa-gift"></i> Payout: 900 Baisa</span>`
+                    : `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-bold text-[9px]"><i class="fa-solid fa-circle-minus"></i> Payout: 0 Baisa</span>`;
+
+                const card = document.createElement('div');
+                card.className = 'bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex flex-col justify-between hover:border-amber-500/40 transition shadow-md relative';
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-1.5 pb-1 border-b border-slate-800">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-amber-400 font-bold text-xs">#${index + 1}</span>
+                            <span class="text-[9px] text-slate-400 uppercase font-semibold">Staff:</span>
+                            <span class="text-xs font-bold text-amber-300 flex items-center gap-1">
+                                <i class="fa-solid fa-user-tie text-[9px]"></i> ${o.staffName}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center gap-1">
+                            <button onclick="openOrderModal('${o.id}')" title="Edit Order" class="text-amber-400 hover:text-amber-300 transition text-[11px] p-1 rounded hover:bg-slate-800">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="requestDeleteOrder('${o.id}')" title="Delete Order" class="text-slate-500 hover:text-rose-400 transition text-[11px] p-1 rounded hover:bg-slate-800">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1 mb-2">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs font-bold text-slate-100 truncate max-w-[120px]">${o.customerName}</span>
+                            <span class="text-xs font-bold text-emerald-400">${(o.amount || 0).toFixed(3)} OMR</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-400">
+                            <span><i class="fa-solid fa-phone text-[8px]"></i> ${o.customerPhone}</span>
+                            <span><i class="fa-solid fa-clock text-[8px]"></i> ${pickupDate}</span>
+                        </div>
+                        ${o.notes ? `<div class="text-[10px] text-slate-400 bg-slate-950/50 p-1 rounded border border-slate-800/80"><i class="fa-solid fa-note-sticky text-[9px] text-amber-400"></i> ${o.notes}</div>` : ''}
+                    </div>
+
+                    <div class="flex justify-between items-center pt-1.5 border-t border-slate-800">
+                        <div>
+                            ${rewardBadge}
+                        </div>
+
+                        <button onclick="toggleOrderStatus('${o.id}')" class="px-2 py-1 rounded text-[9px] font-bold tracking-wide transition flex items-center gap-1 ${isPickedUp ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30'}">
+                            ${isPickedUp ? '<i class="fa-solid fa-circle-check"></i> Picked Up' : '<i class="fa-solid fa-clock"></i> Pending'}
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function renderCharts(filteredOrders) {
+            const staffNames = staffMembers.map(s => s.name);
+            const staffCommissions = staffMembers.map(s => {
+                return filteredOrders.filter(o => o.staffId === s.id).reduce((sum, curr) => sum + (curr.commission || 0), 0);
+            });
+
+            const ctxStaff = document.getElementById('staffChart').getContext('2d');
+            if (staffChartInstance) staffChartInstance.destroy();
+
+            staffChartInstance = new Chart(ctxStaff, {
+                type: 'bar',
+                data: {
+                    labels: staffNames,
+                    datasets: [{
+                        label: 'Commission (OMR)',
+                        data: staffCommissions,
+                        backgroundColor: 'rgba(245, 158, 11, 0.75)',
+                        borderColor: '#f59e0b',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            const pendingCount = filteredOrders.filter(o => o.status === 'Pending').length;
+            const pickedCount = filteredOrders.filter(o => o.status === 'Picked Up').length;
+
+            const ctxOrder = document.getElementById('orderTypeChart').getContext('2d');
+            if (orderChartInstance) orderChartInstance.destroy();
+
+            orderChartInstance = new Chart(ctxOrder, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Picked Up'],
+                    datasets: [{
+                        data: [pendingCount, pickedCount],
+                        backgroundColor: ['rgba(245, 158, 11, 0.85)', 'rgba(16, 185, 129, 0.85)'],
+                        borderColor: '#0b1329',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupRealtimeListeners();
+            updateUI();
+        });
+    </script>
+</body>
+</html>
