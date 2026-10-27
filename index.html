@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ash Bakes - Staff Reward & Order Tracker v6</title>
+    <title>Ash Bakes - Staff Reward & Order Tracker v7</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -21,12 +21,12 @@
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
-        .modal-animate { transition: all 0.2s ease-in-out; }
+        .modal-animate { transition: all 0.15s ease-in-out; }
     </style>
 </head>
 <body class="min-h-screen pb-8 custom-scrollbar">
 
-    <!-- Top Navigation (Compact Padding) -->
+    <!-- Top Navigation (Compact) -->
     <nav class="sticky top-0 z-40 glass-nav py-2.5 px-3 sm:px-6 mb-3">
         <div class="max-w-7xl mx-auto flex flex-row justify-between items-center gap-2">
             <div class="flex items-center gap-2.5">
@@ -35,7 +35,7 @@
                 </div>
                 <div>
                     <h1 class="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-200 to-amber-300 bg-clip-text text-transparent leading-none">Ash Bakes</h1>
-                    <p class="text-[9px] text-amber-400 font-bold tracking-wider uppercase mt-0.5">Reward Tracker v6</p>
+                    <p class="text-[9px] text-amber-400 font-bold tracking-wider uppercase mt-0.5">Reward Tracker v7</p>
                 </div>
             </div>
             
@@ -50,10 +50,10 @@
         </div>
     </nav>
 
-    <!-- Main Container (Tight Vertical Spacing & Minimal Margins) -->
+    <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-3 sm:px-6 space-y-3">
         
-        <!-- Global Date Filter Controls (Compact Layout) -->
+        <!-- Global Date Filter Controls -->
         <div class="glass-card p-2.5 rounded-xl flex flex-wrap justify-between items-center gap-2 border border-amber-500/20">
             <div class="flex items-center gap-1.5">
                 <i class="fa-solid fa-filter text-amber-400 text-xs"></i>
@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <!-- 1. ACTIVE ORDERS GRID SECTION - AT VERY TOP (Clean Header, No Extra Subtitle Text, Compressed Box Padding) -->
+        <!-- 1. ACTIVE ORDERS GRID SECTION - AT VERY TOP -->
         <div class="glass-card p-3 sm:p-4 rounded-xl border border-amber-500/30 shadow-xl">
             <div class="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-slate-800">
                 <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -98,13 +98,13 @@
                 </div>
             </div>
 
-            <!-- Horizontal 2-Column Grid (Compressed Vertical Spacing) -->
+            <!-- Horizontal 2-Column Grid -->
             <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                 <!-- Dynamic Compact Order Cards -->
             </div>
         </div>
 
-        <!-- Key Metrics Cards (Compact Grid) -->
+        <!-- Key Metrics Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             <div class="glass-card p-3 rounded-xl">
                 <div class="flex items-center justify-between mb-1">
@@ -140,7 +140,7 @@
             </div>
         </div>
 
-        <!-- Staff Individual Dashboards (Compact) -->
+        <!-- Staff Individual Dashboards -->
         <div class="glass-card p-3.5 rounded-xl">
             <h2 class="text-xs font-bold text-slate-200 mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
                 <i class="fa-solid fa-id-card-clip text-amber-400"></i> Staff Earnings Breakdown
@@ -150,7 +150,7 @@
             </div>
         </div>
 
-        <!-- Charts Section (Compact Height) -->
+        <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div class="glass-card p-3.5 rounded-xl lg:col-span-2">
                 <h2 class="text-xs font-bold text-slate-200 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
@@ -308,7 +308,6 @@
         let orderChartInstance = null;
         let confirmActionHandler = null;
 
-        // Commission Rule: >= 20.000 OMR = 0.900 OMR (900 Baisa), strictly < 20.000 OMR = 0.000 OMR
         function calculateCommission(amountOMR) {
             const amt = parseFloat(amountOMR) || 0;
             return amt >= 20.000 ? 0.900 : 0.000;
@@ -335,7 +334,6 @@
             });
         }
 
-        // Date Filter Logic
         function setDateRange(rangeType) {
             activeDateFilter = rangeType;
             document.querySelectorAll('.date-filter-btn').forEach(btn => {
@@ -376,7 +374,7 @@
             });
         }
 
-        // Modal Controls
+        // INSTANT UI CLOSING MODALS
         function openStaffModal() {
             renderModalStaffList();
             document.getElementById('modal-staff').classList.remove('hidden');
@@ -385,6 +383,7 @@
             document.getElementById('modal-staff').classList.add('hidden');
             document.getElementById('input-staff-name').value = '';
         }
+
         function openOrderModal(orderIdToEdit = null) {
             populateStaffSelect();
             const editIdInput = document.getElementById('edit-order-id');
@@ -471,7 +470,7 @@
             }
         }
 
-        // Staff Handlers
+        // Staff Handlers with INSTANT Popup Close & Optimistic Update
         async function handleAddStaff(e) {
             e.preventDefault();
             const nameInput = document.getElementById('input-staff-name');
@@ -479,15 +478,16 @@
             if (!name) return;
 
             const newStaff = { id: 'stf_' + Date.now(), name: name, createdAt: Date.now() };
+            
+            // INSTANT CLOSE & UPDATE UI FIRST
+            closeStaffModal();
             staffMembers.push(newStaff);
             saveStaffLocal();
-
-            if (db) { try { await db.collection("staff").doc(newStaff.id).set(newStaff); } catch (e) {} }
-
-            nameInput.value = '';
-            renderModalStaffList();
             updateUI();
-            closeStaffModal();
+
+            if (db) {
+                db.collection("staff").doc(newStaff.id).set(newStaff).catch(err => console.error(err));
+            }
         }
 
         function requestDeleteStaff(staffId) {
@@ -501,11 +501,11 @@
         async function executeDeleteStaff(staffId) {
             staffMembers = staffMembers.filter(s => s.id !== staffId);
             saveStaffLocal();
-
-            if (db) { try { await db.collection("staff").doc(staffId).delete(); } catch(e) {} }
-
-            renderModalStaffList();
             updateUI();
+
+            if (db) {
+                db.collection("staff").doc(staffId).delete().catch(err => console.error(err));
+            }
         }
 
         function renderModalStaffList() {
@@ -526,7 +526,7 @@
             });
         }
 
-        // Order Handlers (Create & Modify)
+        // Order Handlers with INSTANT Popup Close & Optimistic Update
         async function handleSaveOrder(e) {
             e.preventDefault();
             const editId = document.getElementById('edit-order-id').value;
@@ -539,6 +539,9 @@
 
             const commission = calculateCommission(amount);
             const staff = staffMembers.find(s => s.id === staffId);
+
+            // INSTANT CLOSE MODAL & RENDER UI
+            closeOrderModal();
 
             if (editId) {
                 const existingOrder = orders.find(o => o.id === editId);
@@ -553,7 +556,10 @@
                     existingOrder.notes = notes;
 
                     saveOrdersLocal();
-                    if (db) { try { await db.collection("orders").doc(editId).update(existingOrder); } catch (e) {} }
+                    updateUI();
+                    if (db) {
+                        db.collection("orders").doc(editId).update(existingOrder).catch(err => console.error(err));
+                    }
                 }
             } else {
                 const newOrder = {
@@ -572,12 +578,12 @@
 
                 orders.unshift(newOrder);
                 saveOrdersLocal();
+                updateUI();
 
-                if (db) { try { await db.collection("orders").doc(newOrder.id).set(newOrder); } catch (e) {} }
+                if (db) {
+                    db.collection("orders").doc(newOrder.id).set(newOrder).catch(err => console.error(err));
+                }
             }
-
-            closeOrderModal();
-            updateUI();
         }
 
         async function toggleOrderStatus(orderId) {
@@ -585,10 +591,11 @@
             if (!order) return;
             order.status = order.status === 'Pending' ? 'Picked Up' : 'Pending';
             saveOrdersLocal();
-
-            if (db) { try { await db.collection("orders").doc(orderId).update({ status: order.status }); } catch(e) {} }
-
             updateUI();
+
+            if (db) {
+                db.collection("orders").doc(orderId).update({ status: order.status }).catch(err => console.error(err));
+            }
         }
 
         function requestDeleteOrder(orderId) {
@@ -602,10 +609,11 @@
         async function executeDeleteOrder(orderId) {
             orders = orders.filter(o => o.id !== orderId);
             saveOrdersLocal();
-
-            if (db) { try { await db.collection("orders").doc(orderId).delete(); } catch(e) {} }
-
             updateUI();
+
+            if (db) {
+                db.collection("orders").doc(orderId).delete().catch(err => console.error(err));
+            }
         }
 
         // Main UI Render Pipeline
@@ -653,7 +661,7 @@
                 const baisa = Math.round(totalComm * 1000);
 
                 const card = document.createElement('div');
-                card.className = 'glass-card p-2.5 rounded-lg border border-slate-700/80 hover:border-amber-500/40 transition';
+                card.className = 'glass-card p-2.5 rounded-lg border border-slate-700/85 hover:border-amber-500/40 transition';
                 card.innerHTML = `
                     <div class="flex items-center justify-between mb-1.5">
                         <div class="flex items-center gap-2">
@@ -680,7 +688,6 @@
             });
         }
 
-        // Render 2-Column Side-by-Side Horizontal Layout (Compressed Vertical Spacing, Compact Box)
         function renderOrders(filteredOrders = getFilteredOrders()) {
             const container = document.getElementById('orders-grid-container');
             container.innerHTML = '';
