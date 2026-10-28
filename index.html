@@ -1,308 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ash Bakes - Staff Reward & Order Tracker v11</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b1329; color: #f8fafc; }
-        .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glass-nav { background: rgba(11, 19, 41, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 4px; }
-        .modal-animate { transition: all 0.15s ease-in-out; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Ash Bakes - Reward Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+:root{--bg:#0b1220;--surface:#111a2e;--surface2:#16213a;--line:#223052;--muted:#8b9ab8;--accent:#f5a524;}
+*{-webkit-tap-highlight-color:transparent}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:#e8edf7}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.field{background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:#fff;font-size:13px;padding:9px 12px;outline:none;width:100%}
+.field:focus{border-color:var(--accent)}
+select.field{appearance:none;-webkit-appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b9ab8' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+input[type=date]{color-scheme:dark}
+.chip{padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;color:var(--muted);background:var(--surface2);border:1px solid var(--line);white-space:nowrap;transition:.15s}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#1a1200}
+.label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hide-scroll::-webkit-scrollbar{display:none}.hide-scroll{scrollbar-width:none}
+.screen{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility .25s}
+.screen.open{transform:none;visibility:visible}
+.overlay{position:fixed;inset:0;z-index:70;background:rgba(5,9,18,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:14px}
+.overlay.open{display:flex}
+</style>
 </head>
-<body class="min-h-screen pb-8 custom-scrollbar">
+<body class="min-h-screen pb-10">
 
-    <!-- Top Navigation -->
-    <nav class="sticky top-0 z-40 glass-nav py-3.5 px-4 sm:px-8 mb-4">
-        <div class="max-w-7xl mx-auto flex flex-row justify-between items-center gap-2">
-            <div class="flex items-center gap-3">
-                <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-slate-950 font-black text-3xl p-2.5 shadow-lg shadow-amber-500/20">
-                    <i class="fa-solid fa-cookie-bite"></i>
-                </div>
-                <div>
-                    <h1 class="font-extrabold text-xl sm:text-2xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-amber-300 bg-clip-text text-transparent leading-none">Ash Bakes</h1>
-                    <p class="text-xs text-amber-400 font-bold tracking-wider uppercase mt-1">Reward Tracker v11</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <button onclick="openStaffModal()" class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700 flex items-center gap-2 shadow-sm">
-                    <i class="fa-solid fa-users text-amber-400 text-lg"></i> Staff
-                </button>
-                <button onclick="openOrderModal()" class="px-4 py-2.5 text-xs sm:text-sm font-extrabold rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 transition shadow-lg shadow-amber-500/20 flex items-center gap-2">
-                    <i class="fa-solid fa-plus text-slate-950 text-lg"></i> New Order
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-3 sm:px-6 space-y-4">
-        
-        <!-- Global Date Filter Controls -->
-        <div class="glass-card p-3.5 rounded-xl flex flex-wrap justify-between items-center gap-3 border border-amber-500/20">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-filter text-amber-400 text-lg"></i>
-                <span class="text-xs font-extrabold text-slate-200 tracking-wider">FILTER:</span>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="setDateRange('ALL')" id="filter-btn-ALL" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">All Time</button>
-                <button onclick="setDateRange('TODAY')" id="filter-btn-TODAY" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">Today</button>
-                <button onclick="setDateRange('YESTERDAY')" id="filter-btn-YESTERDAY" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">Yesterday</button>
-                <button onclick="setDateRange('MONTH')" id="filter-btn-MONTH" class="date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">This Month</button>
-                
-                <div class="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-700">
-                    <input type="date" id="date-custom-start" onchange="setDateRange('CUSTOM')" class="bg-transparent text-xs text-slate-300 focus:outline-none">
-                    <span class="text-xs text-slate-500">to</span>
-                    <input type="date" id="date-custom-end" onchange="setDateRange('CUSTOM')" class="bg-transparent text-xs text-slate-300 focus:outline-none">
-                </div>
-            </div>
-        </div>
-
-        <!-- 1. ACTIVE ORDERS GRID SECTION -->
-        <div class="glass-card p-4 rounded-xl border border-amber-500/30 shadow-xl">
-            <div class="flex flex-wrap justify-between items-center gap-2 mb-3 pb-2 border-b border-slate-800">
-                <h2 class="text-base font-bold text-slate-200 flex items-center gap-2.5">
-                    <i class="fa-solid fa-boxes-stacked text-amber-400 text-xl"></i> Active Orders
-                </h2>
-
-                <div class="flex items-center gap-2 flex-wrap">
-                    <div class="flex items-center gap-1.5">
-                        <label class="text-xs text-slate-400 font-bold uppercase">Staff:</label>
-                        <select id="filter-staff" onchange="renderOrders()" class="bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
-                            <option value="ALL">All Staff</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <label class="text-xs text-slate-400 font-bold uppercase">Status:</label>
-                        <select id="filter-status" onchange="renderOrders()" class="bg-slate-800 text-xs text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400">
-                            <option value="ALL">All Status</option>
-                            <option value="Pending">Pending Pickup</option>
-                            <option value="Picked Up">Picked Up</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Horizontal 2-Column Grid -->
-            <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <!-- Dynamic Order Cards -->
-            </div>
-        </div>
-
-        <!-- Key Metrics Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div class="glass-card p-4 rounded-xl">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Revenue</span>
-                    <i class="fa-solid fa-coins text-emerald-400 text-2xl"></i>
-                </div>
-                <div class="text-xl font-bold text-emerald-400" id="stat-total-revenue">0.000 <span class="text-xs text-emerald-500">OMR</span></div>
-            </div>
-
-            <div class="glass-card p-4 rounded-xl">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Commissions</span>
-                    <i class="fa-solid fa-hand-holding-dollar text-amber-400 text-2xl"></i>
-                </div>
-                <div class="text-xl font-bold text-amber-400" id="stat-total-commission">0.000 <span class="text-xs text-amber-500">OMR</span></div>
-            </div>
-
-            <div class="glass-card p-4 rounded-xl">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Orders</span>
-                    <i class="fa-solid fa-box-archive text-blue-400 text-2xl"></i>
-                </div>
-                <div class="text-xl font-bold text-slate-100" id="stat-total-orders">0</div>
-                <p class="text-xs text-slate-400 mt-0.5" id="stat-pending-orders">0 Pending Pickups</p>
-            </div>
-
-            <div class="glass-card p-4 rounded-xl">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Active Staff</span>
-                    <i class="fa-solid fa-user-gear text-purple-400 text-2xl"></i>
-                </div>
-                <div class="text-xl font-bold text-purple-300" id="stat-active-staff">0</div>
-            </div>
-        </div>
-
-        <!-- Staff Individual Dashboards -->
-        <div class="glass-card p-4 rounded-xl">
-            <h2 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2 uppercase tracking-wider">
-                <i class="fa-solid fa-id-card-clip text-amber-400 text-xl"></i> Staff Earnings Breakdown
-            </h2>
-            <div id="staff-dashboards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                <!-- Dynamic per-staff cards -->
-            </div>
-        </div>
-
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div class="glass-card p-4 rounded-xl lg:col-span-2">
-                <h2 class="text-sm font-bold text-slate-200 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                    <i class="fa-solid fa-chart-column text-amber-400 text-xl"></i> Staff Commission Comparison
-                </h2>
-                <div class="h-48 relative">
-                    <canvas id="staffChart"></canvas>
-                </div>
-            </div>
-
-            <div class="glass-card p-4 rounded-xl">
-                <h2 class="text-sm font-bold text-slate-200 mb-2 flex items-center gap-2 uppercase tracking-wider">
-                    <i class="fa-solid fa-chart-pie text-amber-400 text-xl"></i> Pickup Status
-                </h2>
-                <div class="h-48 relative flex items-center justify-center">
-                    <canvas id="orderTypeChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Modal: Add / Manage Staff (FULL SCREEN / NO INNER SCROLL / DYNAMIC EXPANDING GRID / PROMINENT TOP-RIGHT RED CROSS BUTTON WITH HEADER) -->
-    <div id="modal-staff" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto modal-animate">
-        <div class="glass-card w-full max-w-6xl p-5 sm:p-7 rounded-2xl border border-amber-500/30 shadow-2xl flex flex-col my-auto relative">
-            
-            <!-- Modal Header aligned cleanly with Red Cross Button on the Right -->
-            <div class="flex justify-between items-center mb-5 pb-4 border-b border-slate-800/80">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl border border-amber-500/20 shadow-md">
-                        <i class="fa-solid fa-users-gear"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg sm:text-2xl font-black text-slate-100 flex items-center gap-2 tracking-tight">
-                            Staff Manager Layout
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-400 font-medium">Add staff & view complete team layout at once (No Scroll View)</p>
-                    </div>
-                </div>
-
-                <!-- DEDICATED PROMINENT TOP RIGHT RED CROSS ❌ BUTTON -->
-                <button onclick="closeStaffModal()" title="Close Staff Manager" class="w-11 h-11 rounded-xl bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-400 flex items-center justify-center text-2xl transition border border-rose-500/30 shadow-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
-            <!-- Input Form Section -->
-            <form id="form-add-staff" onsubmit="handleAddStaff(event)" class="mb-5 bg-slate-900/90 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row gap-3 shadow-md">
-                <div class="flex-1 relative">
-                    <i class="fa-solid fa-user-plus text-amber-400 absolute left-4 top-1/2 -translate-y-1/2 text-xl"></i>
-                    <input type="text" id="input-staff-name" required placeholder="Enter new staff full name..." class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-12 pr-4 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400 transition">
-                </div>
-                <button type="submit" class="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-extrabold px-7 py-3 rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
-                    <i class="fa-solid fa-plus text-slate-950 text-lg"></i> Add Staff
-                </button>
-            </form>
-
-            <!-- Staff List Container (EXPANDED GRID - NO INNER SCROLL - ALL STAFF VISIBLE TOGETHER) -->
-            <div class="w-full">
-                <div class="flex justify-between items-center mb-3 px-1">
-                    <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-list-check text-amber-400 text-lg"></i> All Staff Members (<span id="modal-staff-count" class="text-amber-400 font-black text-sm">0</span>)
-                    </span>
-                </div>
-                <!-- FULL GRID DISPLAY FOR ALL STAFF AT ONCE -->
-                <div id="modal-staff-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                    <!-- Expanded Staff Cards -->
-                </div>
-            </div>
-
-        </div>
+<!-- ================= HOME ================= -->
+<header class="sticky top-0 z-40 bg-[#0b1220]/95 backdrop-blur border-b border-[#223052]">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-cookie-bite"></i></div>
+      <div class="min-w-0">
+        <h1 class="font-extrabold text-lg leading-tight">Ash Bakes</h1>
+        <p class="text-[11px] text-slate-400 font-semibold">Reward Tracker</p>
+      </div>
     </div>
-
-    <!-- Modal: Create / Edit Order -->
-    <div id="modal-order" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-3 modal-animate">
-        <div class="glass-card w-full max-w-md p-5 rounded-2xl border border-slate-700 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
-                <h3 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2" id="order-modal-title">
-                    <i class="fa-solid fa-cart-plus text-amber-400 text-xl"></i> Create New Order
-                </h3>
-                <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
-            </div>
-
-            <form id="form-add-order" onsubmit="handleSaveOrder(event)" class="space-y-3">
-                <input type="hidden" id="edit-order-id" value="">
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Staff Member</label>
-                    <select id="order-staff-id" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
-                        <!-- Dynamic options -->
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Customer Name</label>
-                        <input type="text" id="order-customer-name" required placeholder="e.g. Salim" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Customer Phone</label>
-                        <input type="tel" id="order-customer-phone" required placeholder="968xxxxxxx" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Amount (OMR)</label>
-                        <input type="number" step="0.100" min="0.100" id="order-amount" required oninput="previewCommission()" placeholder="20.000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Pickup Time</label>
-                        <input type="datetime-local" id="order-pickup-time" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1 uppercase">Notes / Items</label>
-                    <input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-amber-400">
-                </div>
-
-                <!-- Commission Preview -->
-                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 flex justify-between items-center text-xs">
-                    <span class="text-slate-300 font-medium">Estimated Reward:</span>
-                    <span id="commission-preview" class="font-bold text-amber-400">0.000 OMR (0 Baisa)</span>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
-                    <button type="submit" id="order-submit-btn" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2 rounded-xl text-xs sm:text-sm transition">Save Order</button>
-                </div>
-            </form>
-        </div>
+    <div class="flex items-center gap-2">
+      <button onclick="openStaffModal()" class="h-10 px-3.5 rounded-xl bg-[#16213a] border border-[#223052] text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-users text-amber-400"></i><span class="hidden sm:inline">Staff</span></button>
+      <button onclick="openOrderModal()" class="h-10 px-4 rounded-xl bg-amber-400 text-slate-900 text-sm font-extrabold flex items-center gap-2"><i class="fa-solid fa-plus"></i> New Order</button>
     </div>
+  </div>
+</header>
 
-    <!-- Custom Confirmation Modal -->
-    <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 modal-animate">
-        <div class="glass-card w-full max-w-xs p-5 rounded-2xl border border-slate-700 shadow-2xl text-center">
-            <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 text-2xl">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 class="text-sm font-bold text-slate-100 mb-1" id="confirm-title">Confirm Action</h3>
-            <p class="text-xs text-slate-400 mb-5" id="confirm-message">Are you sure you want to proceed?</p>
-            <div class="flex justify-center gap-2.5">
-                <button id="confirm-btn-cancel" onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition">Cancel</button>
-                <button id="confirm-btn-action" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-500 hover:bg-rose-400 text-white transition">Delete</button>
-            </div>
-        </div>
+<main class="max-w-5xl mx-auto px-4 pt-4 space-y-4">
+
+  <!-- Home period filter -->
+  <section>
+    <div class="flex gap-2 overflow-x-auto hide-scroll pb-1" id="home-chips">
+      <button class="chip on" data-r="ALL" onclick="setHomeRange('ALL')">All Time</button>
+      <button class="chip" data-r="TODAY" onclick="setHomeRange('TODAY')">Today</button>
+      <button class="chip" data-r="YESTERDAY" onclick="setHomeRange('YESTERDAY')">Yesterday</button>
+      <button class="chip" data-r="MONTH" onclick="setHomeRange('MONTH')">This Month</button>
+      <button class="chip" data-r="CUSTOM" onclick="setHomeRange('CUSTOM')">Manually</button>
     </div>
+    <div id="home-custom" class="hidden grid grid-cols-2 gap-2 mt-2">
+      <input type="date" id="home-start" class="field" onchange="updateUI()">
+      <input type="date" id="home-end" class="field" onchange="updateUI()">
+    </div>
+  </section>
 
-    <script>
-        // Firebase Configuration
-        const firebaseConfig = {
+  <!-- KPIs -->
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="card p-4"><p class="label">Revenue</p><p class="text-xl font-extrabold text-emerald-400 mt-1.5" id="stat-total-revenue">0.000</p><p class="text-[11px] text-slate-500 font-semibold">OMR</p></div>
+    <div class="card p-4"><p class="label">Rewards</p><p class="text-xl font-extrabold text-amber-400 mt-1.5" id="stat-total-commission">0.000</p><p class="text-[11px] text-slate-500 font-semibold">OMR</p></div>
+    <div class="card p-4"><p class="label">Orders</p><p class="text-xl font-extrabold mt-1.5" id="stat-total-orders">0</p><p class="text-[11px] text-slate-500 font-semibold" id="stat-pending-orders">0 pending</p></div>
+    <div class="card p-4"><p class="label">Staff</p><p class="text-xl font-extrabold text-violet-300 mt-1.5" id="stat-active-staff">0</p><p class="text-[11px] text-slate-500 font-semibold">members</p></div>
+  </section>
+
+  <!-- Earnings button -->
+  <button onclick="openEarnings()" class="w-full card p-4 flex items-center gap-4 text-left hover:border-amber-400/60 transition">
+    <div class="w-12 h-12 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/25 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-wallet"></i></div>
+    <div class="flex-1 min-w-0">
+      <p class="font-extrabold text-[15px]">Staff Earnings Breakdown</p>
+      <p class="text-xs text-slate-400 mt-0.5">Staff aur date ke hisab se orders aur earnings dekhein</p>
+    </div>
+    <i class="fa-solid fa-chevron-right text-slate-500"></i>
+  </button>
+
+  <!-- Active Orders -->
+  <section class="card p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+      <h2 class="font-extrabold text-[15px] flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-amber-400"></i> Active Orders <span class="text-xs font-bold text-slate-500" id="orders-count"></span></h2>
+      <div class="grid grid-cols-2 gap-2 w-full sm:w-auto sm:min-w-[320px]">
+        <select id="filter-staff" onchange="renderOrders()" class="field"><option value="ALL">All Staff</option></select>
+        <select id="filter-status" onchange="renderOrders()" class="field">
+          <option value="ALL">All Status</option><option value="Pending">Pending Pickup</option><option value="Picked Up">Picked Up</option>
+        </select>
+      </div>
+    </div>
+    <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+  </section>
+
+  <!-- Charts -->
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+    <div class="card p-4 lg:col-span-2">
+      <h2 class="font-extrabold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-column text-amber-400"></i> Rewards by Staff</h2>
+      <div class="h-48 relative"><canvas id="staffChart"></canvas></div>
+    </div>
+    <div class="card p-4">
+      <h2 class="font-extrabold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-amber-400"></i> Pickup Status</h2>
+      <div class="h-48 relative"><canvas id="orderTypeChart"></canvas></div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= FULL SCREEN: STAFF EARNINGS ================= -->
+<div id="screen-earnings" class="screen" aria-hidden="true">
+  <header class="shrink-0 bg-[#0b1220] border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
+    <div class="max-w-3xl mx-auto w-full px-4 h-14 flex items-center justify-between">
+      <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2.5"><i class="fa-solid fa-wallet text-amber-400"></i> Staff Earnings Breakdown</h2>
+      <button onclick="closeEarnings()" title="Close" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center text-lg transition"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </header>
+
+  <div class="shrink-0 border-b border-[#223052] bg-[#0e1628]">
+    <div class="max-w-3xl mx-auto w-full px-4 py-3 space-y-3">
+      <select id="earn-staff" onchange="renderEarnings()" class="field"><option value="ALL">All Staff</option></select>
+      <div class="flex gap-2 overflow-x-auto hide-scroll" id="earn-chips">
+        <button class="chip" data-r="TODAY" onclick="setEarnRange('TODAY')">Today</button>
+        <button class="chip" data-r="YESTERDAY" onclick="setEarnRange('YESTERDAY')">Yesterday</button>
+        <button class="chip on" data-r="MONTH" onclick="setEarnRange('MONTH')">This Month</button>
+        <button class="chip" data-r="CUSTOM" onclick="setEarnRange('CUSTOM')">Manually</button>
+      </div>
+      <div id="earn-custom" class="hidden grid grid-cols-2 gap-2">
+        <div><p class="label mb-1">From</p><input type="date" id="earn-start" class="field" onchange="renderEarnings()"></div>
+        <div><p class="label mb-1">To</p><input type="date" id="earn-end" class="field" onchange="renderEarnings()"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto">
+    <div class="max-w-3xl mx-auto w-full px-4 py-4 space-y-4">
+      <div class="grid grid-cols-3 gap-2.5">
+        <div class="card p-3"><p class="label">Orders</p><p class="text-lg font-extrabold mt-1" id="earn-orders">0</p></div>
+        <div class="card p-3"><p class="label">Sales</p><p class="text-lg font-extrabold text-emerald-400 mt-1" id="earn-sales">0.000</p></div>
+        <div class="card p-3 border-amber-400/40"><p class="label">Earnings</p><p class="text-lg font-extrabold text-amber-400 mt-1" id="earn-total">0.000</p></div>
+      </div>
+
+      <div id="earn-staff-summary" class="hidden">
+        <p class="label mb-2">Per staff</p>
+        <div id="earn-staff-list" class="flex gap-2.5 overflow-x-auto hide-scroll pb-1"></div>
+      </div>
+
+      <div>
+        <p class="label mb-2" id="earn-list-title">Orders</p>
+        <div id="earn-list" class="space-y-2.5"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL: STAFF ================= -->
+<div id="modal-staff" class="overlay">
+  <div class="card w-full max-w-md p-5 max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-extrabold text-base flex items-center gap-2"><i class="fa-solid fa-users text-amber-400"></i> Manage Staff</h3>
+      <button onclick="closeStaffModal()" class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="form-add-staff" onsubmit="handleAddStaff(event)" class="flex gap-2 mb-4">
+      <input type="text" id="input-staff-name" required placeholder="New staff name" class="field">
+      <button type="submit" class="px-4 rounded-xl bg-amber-400 text-slate-900 font-extrabold text-sm shrink-0"><i class="fa-solid fa-plus"></i> Add</button>
+    </form>
+    <p class="label mb-2">All staff (<span id="modal-staff-count">0</span>)</p>
+    <div id="modal-staff-list" class="space-y-2 overflow-y-auto"></div>
+  </div>
+</div>
+
+<!-- ================= MODAL: ORDER ================= -->
+<div id="modal-order" class="overlay">
+  <div class="card w-full max-w-md p-5 max-h-[92vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-extrabold text-base flex items-center gap-2" id="order-modal-title"><i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order</h3>
+      <button onclick="closeOrderModal()" class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="form-add-order" onsubmit="handleSaveOrder(event)" class="space-y-3">
+      <input type="hidden" id="edit-order-id" value="">
+      <div><p class="label mb-1">Staff member</p><select id="order-staff-id" required class="field"></select></div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div><p class="label mb-1">Customer</p><input type="text" id="order-customer-name" required placeholder="e.g. Salim" class="field"></div>
+        <div><p class="label mb-1">Phone</p><input type="tel" id="order-customer-phone" required placeholder="968xxxxxxx" class="field"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div><p class="label mb-1">Amount (OMR)</p><input type="number" step="0.100" min="0.100" id="order-amount" required oninput="previewCommission()" placeholder="20.000" class="field"></div>
+        <div><p class="label mb-1">Pickup time</p><input type="datetime-local" id="order-pickup-time" required class="field" style="color-scheme:dark"></div>
+      </div>
+      <div><p class="label mb-1">Notes / items</p><input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="field"></div>
+      <div class="rounded-xl bg-amber-400/10 border border-amber-400/30 px-3 py-2.5 flex justify-between items-center text-xs">
+        <span class="text-slate-300 font-semibold">Estimated reward</span>
+        <span id="commission-preview" class="font-extrabold text-amber-400">0.000 OMR (0 Baisa)</span>
+      </div>
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" onclick="closeOrderModal()" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400">Cancel</button>
+        <button type="submit" id="order-submit-btn" class="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-900 font-extrabold text-sm">Save Order</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: CONFIRM ================= -->
+<div id="modal-confirm" class="overlay" style="z-index:80">
+  <div class="card w-full max-w-xs p-5 text-center">
+    <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h3 class="font-extrabold text-sm mb-1" id="confirm-title">Confirm</h3>
+    <p class="text-xs text-slate-400 mb-5" id="confirm-message"></p>
+    <div class="flex justify-center gap-2.5">
+      <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400">Cancel</button>
+      <button id="confirm-btn-action" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-500 text-white">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Firebase ----------
+const firebaseConfig = {
             apiKey: "AIzaSyAQamkgnBESFuGEoHCoqtsn-hR-z1Gzh_s",
             authDomain: "ashbakesrewardtracker.firebaseapp.com",
             projectId: "ashbakesrewardtracker",
@@ -310,579 +227,341 @@
             messagingSenderId: "62622240064",
             appId: "1:62622240064:web:cdceb080627e6d4ed7fea5"
         };
-
-        // Initialize Firebase
-        let db = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-        } catch (e) {
-            console.warn("Firebase offline fallback mode enabled.", e);
-        }
-
-        // App States
-        let staffMembers = JSON.parse(localStorage.getItem('ash_staff') || '[]');
-        let orders = JSON.parse(localStorage.getItem('ash_orders') || '[]');
-        let activeDateFilter = 'ALL';
-
-        if (staffMembers.length === 0) {
-            staffMembers = [
-                { id: 'stf_1', name: 'Zamir Ansari', createdAt: Date.now() },
-                { id: 'stf_2', name: 'Sojib', createdAt: Date.now() }
-            ];
-            saveStaffLocal();
-        }
-
-        let staffChartInstance = null;
-        let orderChartInstance = null;
-        let confirmActionHandler = null;
-
-        function calculateCommission(amountOMR) {
-            const amt = parseFloat(amountOMR) || 0;
-            return amt >= 20.000 ? 0.900 : 0.000;
-        }
-
-        function saveStaffLocal() { localStorage.setItem('ash_staff', JSON.stringify(staffMembers)); }
-        function saveOrdersLocal() { localStorage.setItem('ash_orders', JSON.stringify(orders)); }
-
-        function setupRealtimeListeners() {
-            if (!db) return;
-            // Realtime sync for staff
-            db.collection("staff").onSnapshot(snapshot => {
-                if (!snapshot.empty) {
-                    staffMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    saveStaffLocal();
-                } else if (snapshot.empty && staffMembers.length > 0) {
-                    staffMembers.forEach(s => db.collection("staff").doc(s.id).set(s));
-                }
-                updateUI();
-                if (!document.getElementById('modal-staff').classList.contains('hidden')) {
-                    renderModalStaffList();
-                }
-            });
-
-            // Realtime sync for orders
-            db.collection("orders").onSnapshot(snapshot => {
-                if (!snapshot.empty) {
-                    orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    saveOrdersLocal();
-                    updateUI();
-                }
-            });
-        }
-
-        function setDateRange(rangeType) {
-            activeDateFilter = rangeType;
-            document.querySelectorAll('.date-filter-btn').forEach(btn => {
-                btn.className = 'date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700';
-            });
-
-            const activeBtn = document.getElementById(`filter-btn-${rangeType}`);
-            if (activeBtn) {
-                activeBtn.className = 'date-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950';
-            }
-            updateUI();
-        }
-
-        function getFilteredOrders() {
-            return orders.filter(o => {
-                const orderTime = o.createdAt || Date.now();
-                const orderDate = new Date(orderTime);
-                const now = new Date();
-
-                if (activeDateFilter === 'TODAY') {
-                    return orderDate.toDateString() === now.toDateString();
-                } else if (activeDateFilter === 'YESTERDAY') {
-                    const yest = new Date();
-                    yest.setDate(now.getDate() - 1);
-                    return orderDate.toDateString() === yest.toDateString();
-                } else if (activeDateFilter === 'MONTH') {
-                    return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
-                } else if (activeDateFilter === 'CUSTOM') {
-                    const startVal = document.getElementById('date-custom-start').value;
-                    const endVal = document.getElementById('date-custom-end').value;
-                    if (!startVal || !endVal) return true;
-                    const startDate = new Date(startVal);
-                    const endDate = new Date(endVal);
-                    endDate.setHours(23, 59, 59, 999);
-                    return orderDate >= startDate && orderDate <= endDate;
-                }
-                return true;
-            });
-        }
-
-        // Modal triggers
-        function openStaffModal() {
-            renderModalStaffList();
-            document.getElementById('modal-staff').classList.remove('hidden');
-        }
-        function closeStaffModal() {
-            document.getElementById('modal-staff').classList.add('hidden');
-            document.getElementById('input-staff-name').value = '';
-        }
-
-        function openOrderModal(orderIdToEdit = null) {
-            populateStaffSelect();
-            const editIdInput = document.getElementById('edit-order-id');
-            const titleEl = document.getElementById('order-modal-title');
-            const submitBtn = document.getElementById('order-submit-btn');
-
-            if (orderIdToEdit) {
-                const order = orders.find(o => o.id === orderIdToEdit);
-                if (order) {
-                    editIdInput.value = order.id;
-                    titleEl.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400 text-xl"></i> Edit Order Record';
-                    submitBtn.textContent = 'Update Order';
-
-                    document.getElementById('order-staff-id').value = order.staffId;
-                    document.getElementById('order-customer-name').value = order.customerName;
-                    document.getElementById('order-customer-phone').value = order.customerPhone;
-                    document.getElementById('order-amount').value = order.amount;
-                    document.getElementById('order-pickup-time').value = order.pickupTime || '';
-                    document.getElementById('order-notes').value = order.notes || '';
-                    previewCommission();
-                }
-            } else {
-                editIdInput.value = '';
-                titleEl.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400 text-xl"></i> Create New Order';
-                submitBtn.textContent = 'Save Order';
-                document.getElementById('form-add-order').reset();
-                previewCommission();
-            }
-            document.getElementById('modal-order').classList.remove('hidden');
-        }
-        function closeOrderModal() {
-            document.getElementById('modal-order').classList.add('hidden');
-            document.getElementById('edit-order-id').value = '';
-            document.getElementById('form-add-order').reset();
-        }
-
-        function showConfirmModal(title, message, onConfirm) {
-            document.getElementById('confirm-title').textContent = title;
-            document.getElementById('confirm-message').textContent = message;
-            confirmActionHandler = onConfirm;
-            document.getElementById('modal-confirm').classList.remove('hidden');
-        }
-        function closeConfirmModal() {
-            document.getElementById('modal-confirm').classList.add('hidden');
-            confirmActionHandler = null;
-        }
-
-        document.getElementById('confirm-btn-action').addEventListener('click', () => {
-            if (confirmActionHandler) confirmActionHandler();
-            closeConfirmModal();
-        });
-
-        function previewCommission() {
-            const val = document.getElementById('order-amount').value;
-            const comm = calculateCommission(val);
-            const baisa = Math.round(comm * 1000);
-            document.getElementById('commission-preview').textContent = `${comm.toFixed(3)} OMR (${baisa} Baisa)`;
-        }
-
-        function populateStaffSelect() {
-            const select = document.getElementById('order-staff-id');
-            const filterSelect = document.getElementById('filter-staff');
-            const currentFilterVal = filterSelect.value;
-            
-            select.innerHTML = '';
-            filterSelect.innerHTML = '<option value="ALL">All Staff</option>';
-
-            staffMembers.forEach(stf => {
-                const opt = document.createElement('option');
-                opt.value = stf.id;
-                opt.textContent = stf.name;
-                select.appendChild(opt);
-
-                const optFilter = document.createElement('option');
-                optFilter.value = stf.id;
-                optFilter.textContent = stf.name;
-                filterSelect.appendChild(optFilter);
-            });
-
-            if (staffMembers.some(s => s.id === currentFilterVal)) {
-                filterSelect.value = currentFilterVal;
-            } else {
-                filterSelect.value = 'ALL';
-            }
-        }
-
-        // Staff Handlers
-        async function handleAddStaff(e) {
-            e.preventDefault();
-            const nameInput = document.getElementById('input-staff-name');
-            const name = nameInput.value.trim();
-            if (!name) return;
-
-            const newStaff = { id: 'stf_' + Date.now(), name: name, createdAt: Date.now() };
-            
-            staffMembers.push(newStaff);
-            saveStaffLocal();
-            
-            renderModalStaffList();
-            updateUI();
-            
-            nameInput.value = '';
-
-            if (db) {
-                db.collection("staff").doc(newStaff.id).set(newStaff).catch(err => console.error("Firebase sync error:", err));
-            }
-        }
-
-        function requestDeleteStaff(staffId) {
-            showConfirmModal(
-                "Delete Staff Member?",
-                "Are you sure you want to remove this staff member?",
-                () => executeDeleteStaff(staffId)
-            );
-        }
-
-        async function executeDeleteStaff(staffId) {
-            staffMembers = staffMembers.filter(s => s.id !== staffId);
-            saveStaffLocal();
-            renderModalStaffList();
-            updateUI();
-
-            if (db) {
-                db.collection("staff").doc(staffId).delete().catch(err => console.error("Firebase delete error:", err));
-            }
-        }
-
-        function renderModalStaffList() {
-            const list = document.getElementById('modal-staff-list');
-            const countEl = document.getElementById('modal-staff-count');
-            countEl.textContent = staffMembers.length;
-            
-            list.innerHTML = '';
-            if (staffMembers.length === 0) {
-                list.innerHTML = '<div class="text-slate-500 text-xs py-4 text-center col-span-full">No staff members found. Add one above!</div>';
-                return;
-            }
-            staffMembers.forEach(s => {
-                const stfOrders = orders.filter(o => o.staffId === s.id);
-                const totalSales = stfOrders.reduce((sum, o) => sum + (o.amount || 0), 0);
-                
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-slate-900/90 hover:bg-slate-800/90 px-4 py-3 rounded-xl border border-slate-800 transition shadow-sm';
-                div.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 font-extrabold flex items-center justify-center text-base border border-amber-500/20">
-                            ${s.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <span class="font-bold text-slate-100 text-xs sm:text-sm block">${s.name}</span>
-                            <span class="text-[11px] text-slate-400 font-medium">${stfOrders.length} Orders • ${totalSales.toFixed(3)} OMR</span>
-                        </div>
-                    </div>
-                    <button type="button" onclick="requestDeleteStaff('${s.id}')" title="Delete Staff" class="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-base p-2 rounded-xl transition">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        // Order Handlers
-        async function handleSaveOrder(e) {
-            e.preventDefault();
-            const editId = document.getElementById('edit-order-id').value;
-            const staffId = document.getElementById('order-staff-id').value;
-            const customerName = document.getElementById('order-customer-name').value.trim();
-            const customerPhone = document.getElementById('order-customer-phone').value.trim();
-            const amount = parseFloat(document.getElementById('order-amount').value) || 0;
-            const pickupTime = document.getElementById('order-pickup-time').value;
-            const notes = document.getElementById('order-notes').value.trim();
-
-            const commission = calculateCommission(amount);
-            const staff = staffMembers.find(s => s.id === staffId);
-
-            closeOrderModal();
-
-            if (editId) {
-                const existingOrder = orders.find(o => o.id === editId);
-                if (existingOrder) {
-                    existingOrder.staffId = staffId;
-                    existingOrder.staffName = staff ? staff.name : 'Unknown';
-                    existingOrder.customerName = customerName;
-                    existingOrder.customerPhone = customerPhone;
-                    existingOrder.amount = amount;
-                    existingOrder.commission = commission;
-                    existingOrder.pickupTime = pickupTime;
-                    existingOrder.notes = notes;
-
-                    saveOrdersLocal();
-                    updateUI();
-                    if (db) {
-                        db.collection("orders").doc(editId).update(existingOrder).catch(err => console.error(err));
-                    }
-                }
-            } else {
-                const newOrder = {
-                    id: 'ord_' + Date.now(),
-                    staffId: staffId,
-                    staffName: staff ? staff.name : 'Unknown',
-                    customerName: customerName,
-                    customerPhone: customerPhone,
-                    amount: amount,
-                    commission: commission,
-                    pickupTime: pickupTime,
-                    notes: notes,
-                    status: 'Pending',
-                    createdAt: Date.now()
-                };
-
-                orders.unshift(newOrder);
-                saveOrdersLocal();
-                updateUI();
-
-                if (db) {
-                    db.collection("orders").doc(newOrder.id).set(newOrder).catch(err => console.error(err));
-                }
-            }
-        }
-
-        async function toggleOrderStatus(orderId) {
-            const order = orders.find(o => o.id === orderId);
-            if (!order) return;
-            order.status = order.status === 'Pending' ? 'Picked Up' : 'Pending';
-            saveOrdersLocal();
-            updateUI();
-
-            if (db) {
-                db.collection("orders").doc(orderId).update({ status: order.status }).catch(err => console.error(err));
-            }
-        }
-
-        function requestDeleteOrder(orderId) {
-            showConfirmModal(
-                "Delete Order Record?",
-                "Are you sure you want to delete this order?",
-                () => executeDeleteOrder(orderId)
-            );
-        }
-
-        async function executeDeleteOrder(orderId) {
-            orders = orders.filter(o => o.id !== orderId);
-            saveOrdersLocal();
-            updateUI();
-
-            if (db) {
-                db.collection("orders").doc(orderId).delete().catch(err => console.error(err));
-            }
-        }
-
-        // Main UI Render Pipeline
-        function updateUI() {
-            populateStaffSelect();
-            const filteredOrders = getFilteredOrders();
-            renderMetrics(filteredOrders);
-            renderStaffDashboards(filteredOrders);
-            renderOrders(filteredOrders);
-            renderCharts(filteredOrders);
-        }
-
-        function renderMetrics(filteredOrders) {
-            let totalRev = 0;
-            let totalComm = 0;
-            let pendingCount = 0;
-
-            filteredOrders.forEach(o => {
-                totalRev += (o.amount || 0);
-                totalComm += (o.commission || 0);
-                if (o.status === 'Pending') pendingCount++;
-            });
-
-            document.getElementById('stat-total-revenue').innerHTML = `${totalRev.toFixed(3)} <span class="text-xs text-emerald-500 font-medium">OMR</span>`;
-            document.getElementById('stat-total-commission').innerHTML = `${totalComm.toFixed(3)} <span class="text-xs text-amber-500 font-medium">OMR</span>`;
-            document.getElementById('stat-total-orders').textContent = filteredOrders.length;
-            document.getElementById('stat-pending-orders').textContent = `${pendingCount} Pending Pickups`;
-            document.getElementById('stat-active-staff').textContent = staffMembers.length;
-        }
-
-        function renderStaffDashboards(filteredOrders) {
-            const grid = document.getElementById('staff-dashboards-grid');
-            grid.innerHTML = '';
-
-            if (staffMembers.length === 0) {
-                grid.innerHTML = '<div class="text-xs text-slate-500 py-2 col-span-full">No staff members found.</div>';
-                return;
-            }
-
-            staffMembers.forEach(stf => {
-                const stfOrders = filteredOrders.filter(o => o.staffId === stf.id);
-                const orderCount = stfOrders.length;
-                const totalRev = stfOrders.reduce((acc, curr) => acc + (curr.amount || 0), 0);
-                const totalComm = stfOrders.reduce((acc, curr) => acc + (curr.commission || 0), 0);
-
-                const card = document.createElement('div');
-                card.className = 'glass-card p-3 sm:p-4 rounded-xl border border-slate-700/85 hover:border-amber-500/40 transition shadow-md';
-                card.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 font-bold flex items-center justify-center text-xs border border-amber-500/20">
-                                ${stf.name.charAt(0).toUpperCase()}
-                            </div>
-                            <h3 class="font-bold text-slate-100 text-xs sm:text-sm">${stf.name}</h3>
-                        </div>
-                        <span class="bg-slate-800 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-700">${orderCount} Orders</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                        <div>
-                            <span class="text-[9px] text-slate-400 uppercase block font-semibold">Sales</span>
-                            <span class="font-bold text-slate-200">${totalRev.toFixed(3)} OMR</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] text-slate-400 uppercase block font-semibold">Reward</span>
-                            <span class="font-bold text-amber-400">${totalComm.toFixed(3)} OMR</span>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function renderOrders(filteredOrders = getFilteredOrders()) {
-            const container = document.getElementById('orders-grid-container');
-            container.innerHTML = '';
-
-            const filterStaffId = document.getElementById('filter-staff').value;
-            const filterStatus = document.getElementById('filter-status').value;
-
-            const displayOrders = filteredOrders.filter(o => {
-                const matchStaff = filterStaffId === 'ALL' || o.staffId === filterStaffId;
-                const matchStatus = filterStatus === 'ALL' || o.status === filterStatus;
-                return matchStaff && matchStatus;
-            });
-
-            if (displayOrders.length === 0) {
-                container.innerHTML = '<div class="col-span-full p-6 text-center text-slate-500 text-xs sm:text-sm">No matching orders found.</div>';
-                return;
-            }
-
-            displayOrders.forEach((o, index) => {
-                const isPickedUp = o.status === 'Picked Up';
-                const pickupDate = o.pickupTime ? new Date(o.pickupTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-
-                const hasReward = (o.commission || 0) >= 0.9;
-                const rewardBadge = hasReward 
-                    ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold text-[10px]"><i class="fa-solid fa-gift text-sm"></i> Payout: 900 Baisa</span>`
-                    : `<span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 font-bold text-[10px]"><i class="fa-solid fa-circle-minus text-sm"></i> Payout: 0 Baisa</span>`;
-
-                const card = document.createElement('div');
-                card.className = 'bg-slate-900/90 border border-slate-800 p-3 rounded-xl flex flex-col justify-between hover:border-amber-500/40 transition shadow-md relative';
-                
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
-                        <div class="flex items-center gap-2">
-                            <span class="text-amber-400 font-bold text-xs">#${index + 1}</span>
-                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Staff:</span>
-                            <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                                <i class="fa-solid fa-user-tie text-sm"></i> ${o.staffName}
-                            </span>
-                        </div>
-                        
-                        <div class="flex items-center gap-1">
-                            <button onclick="openOrderModal('${o.id}')" title="Edit Order" class="text-amber-400 hover:text-amber-300 transition text-sm p-1.5 rounded-lg hover:bg-slate-800">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            <button onclick="requestDeleteOrder('${o.id}')" title="Delete Order" class="text-slate-500 hover:text-rose-400 transition text-sm p-1.5 rounded-lg hover:bg-slate-800">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-1.5 mb-2.5">
-                        <div class="flex justify-between items-baseline">
-                            <span class="text-xs sm:text-sm font-bold text-slate-100 truncate max-w-[140px]">${o.customerName}</span>
-                            <span class="text-xs sm:text-sm font-bold text-emerald-400">${(o.amount || 0).toFixed(3)} OMR</span>
-                        </div>
-                        <div class="flex justify-between text-xs text-slate-400">
-                            <span><i class="fa-solid fa-phone text-xs"></i> ${o.customerPhone}</span>
-                            <span><i class="fa-solid fa-clock text-xs"></i> ${pickupDate}</span>
-                        </div>
-                        ${o.notes ? `<div class="text-xs text-slate-400 bg-slate-950/50 p-1.5 rounded-lg border border-slate-800/80"><i class="fa-solid fa-note-sticky text-amber-400 text-xs"></i> ${o.notes}</div>` : ''}
-                    </div>
-
-                    <div class="flex justify-between items-center pt-2 border-t border-slate-800">
-                        <div>
-                            ${rewardBadge}
-                        </div>
-
-                        <button onclick="toggleOrderStatus('${o.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide transition flex items-center gap-1.5 ${isPickedUp ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40 hover:bg-amber-500/30'}">
-                            ${isPickedUp ? '<i class="fa-solid fa-circle-check text-sm"></i> Picked Up' : '<i class="fa-solid fa-clock text-sm"></i> Pending'}
-                        </button>
-                    </div>
-                `;
-
-                container.appendChild(card);
-            });
-        }
-
-        function renderCharts(filteredOrders) {
-            const staffNames = staffMembers.map(s => s.name);
-            const staffCommissions = staffMembers.map(s => {
-                return filteredOrders.filter(o => o.staffId === s.id).reduce((sum, curr) => sum + (curr.commission || 0), 0);
-            });
-
-            const ctxStaff = document.getElementById('staffChart').getContext('2d');
-            if (staffChartInstance) staffChartInstance.destroy();
-
-            staffChartInstance = new Chart(ctxStaff, {
-                type: 'bar',
-                data: {
-                    labels: staffNames,
-                    datasets: [{
-                        label: 'Commission (OMR)',
-                        data: staffCommissions,
-                        backgroundColor: 'rgba(245, 158, 11, 0.75)',
-                        borderColor: '#f59e0b',
-                        borderWidth: 1.5,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
-                    }
-                }
-            });
-
-            const pendingCount = filteredOrders.filter(o => o.status === 'Pending').length;
-            const pickedCount = filteredOrders.filter(o => o.status === 'Picked Up').length;
-
-            const ctxOrder = document.getElementById('orderTypeChart').getContext('2d');
-            if (orderChartInstance) orderChartInstance.destroy();
-
-            orderChartInstance = new Chart(ctxOrder, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pending', 'Picked Up'],
-                    datasets: [{
-                        data: [pendingCount, pickedCount],
-                        backgroundColor: ['rgba(245, 158, 11, 0.85)', 'rgba(16, 185, 129, 0.85)'],
-                        borderColor: '#0b1329',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } }
-                    }
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            setupRealtimeListeners();
-            updateUI();
-        });
-    </script>
+let db = null;
+try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }
+catch (e) { console.warn("Firebase offline fallback mode enabled.", e); }
+
+// ---------- State ----------
+let staffMembers = JSON.parse(localStorage.getItem('ash_staff') || '[]');
+let orders = JSON.parse(localStorage.getItem('ash_orders') || '[]');
+let homeRange = 'ALL';
+let earnRange = 'MONTH';
+let staffChartInstance = null, orderChartInstance = null, confirmActionHandler = null;
+
+if (staffMembers.length === 0) {
+  staffMembers = [
+    { id: 'stf_1', name: 'Zamir Ansari', createdAt: Date.now() },
+    { id: 'stf_2', name: 'Sojib', createdAt: Date.now() }
+  ];
+  saveStaffLocal();
+}
+
+// ---------- Helpers ----------
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const omr = n => (n || 0).toFixed(3);
+function calculateCommission(a) { return (parseFloat(a) || 0) >= 20 ? 0.9 : 0; }
+function saveStaffLocal() { localStorage.setItem('ash_staff', JSON.stringify(staffMembers)); }
+function saveOrdersLocal() { localStorage.setItem('ash_orders', JSON.stringify(orders)); }
+
+function inRange(o, mode, startStr, endStr) {
+  const d = new Date(o.createdAt || Date.now()), now = new Date();
+  if (mode === 'TODAY') return d.toDateString() === now.toDateString();
+  if (mode === 'YESTERDAY') { const y = new Date(); y.setDate(now.getDate() - 1); return d.toDateString() === y.toDateString(); }
+  if (mode === 'MONTH') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  if (mode === 'CUSTOM') {
+    const s = startStr ? new Date(startStr + 'T00:00:00') : null;
+    const e = endStr ? new Date(endStr + 'T23:59:59.999') : null;
+    return (!s || d >= s) && (!e || d <= e);
+  }
+  return true;
+}
+function setChips(containerId, mode) {
+  document.querySelectorAll('#' + containerId + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.r === mode));
+}
+const fmtDate = ts => new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+// ---------- Realtime ----------
+function setupRealtimeListeners() {
+  if (!db) return;
+  db.collection("staff").onSnapshot(snap => {
+    if (!snap.empty) { staffMembers = snap.docs.map(d => ({ id: d.id, ...d.data() })); saveStaffLocal(); }
+    else if (staffMembers.length > 0) staffMembers.forEach(s => db.collection("staff").doc(s.id).set(s));
+    updateUI();
+    if ($('modal-staff').classList.contains('open')) renderModalStaffList();
+  });
+  db.collection("orders").onSnapshot(snap => {
+    if (!snap.empty) { orders = snap.docs.map(d => ({ id: d.id, ...d.data() })); saveOrdersLocal(); updateUI(); }
+  });
+}
+
+// ---------- Home filter ----------
+function setHomeRange(r) {
+  homeRange = r; setChips('home-chips', r);
+  $('home-custom').classList.toggle('hidden', r !== 'CUSTOM');
+  updateUI();
+}
+function getFilteredOrders() { return orders.filter(o => inRange(o, homeRange, $('home-start').value, $('home-end').value)); }
+
+// ---------- Earnings screen ----------
+function openEarnings() {
+  fillStaffSelect($('earn-staff'), 'All Staff');
+  const s = $('screen-earnings');
+  s.classList.add('open'); s.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  history.pushState({ earnings: true }, '');
+  renderEarnings();
+}
+function closeEarnings(fromPop) {
+  const s = $('screen-earnings');
+  if (!s.classList.contains('open')) return;
+  s.classList.remove('open'); s.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (!fromPop && history.state && history.state.earnings) history.back();
+}
+window.addEventListener('popstate', () => closeEarnings(true));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEarnings(); });
+
+function setEarnRange(r) {
+  earnRange = r; setChips('earn-chips', r);
+  $('earn-custom').classList.toggle('hidden', r !== 'CUSTOM');
+  renderEarnings();
+}
+function fillStaffSelect(sel, allLabel) {
+  const cur = sel.value;
+  sel.innerHTML = `<option value="ALL">${allLabel}</option>` + staffMembers.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  sel.value = staffMembers.some(s => s.id === cur) ? cur : 'ALL';
+}
+function renderEarnings() {
+  if (!$('screen-earnings').classList.contains('open')) return;
+  const staffId = $('earn-staff').value;
+  const ranged = orders.filter(o => inRange(o, earnRange, $('earn-start').value, $('earn-end').value));
+  const list = ranged.filter(o => staffId === 'ALL' || o.staffId === staffId)
+                     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  $('earn-orders').textContent = list.length;
+  $('earn-sales').textContent = omr(list.reduce((s, o) => s + (o.amount || 0), 0));
+  $('earn-total').textContent = omr(list.reduce((s, o) => s + (o.commission || 0), 0));
+
+  // per-staff chips (only when All Staff)
+  const sumWrap = $('earn-staff-summary');
+  if (staffId === 'ALL' && staffMembers.length > 0) {
+    sumWrap.classList.remove('hidden');
+    $('earn-staff-list').innerHTML = staffMembers.map(s => {
+      const so = ranged.filter(o => o.staffId === s.id);
+      return `<button onclick="pickEarnStaff('${esc(s.id)}')" class="card p-3 min-w-[150px] text-left shrink-0 hover:border-amber-400/60 transition">
+        <div class="flex items-center gap-2 mb-2"><span class="w-7 h-7 rounded-lg bg-amber-400/10 text-amber-400 text-xs font-extrabold flex items-center justify-center">${esc(s.name.charAt(0).toUpperCase())}</span><span class="font-bold text-xs truncate">${esc(s.name)}</span></div>
+        <p class="text-[11px] text-slate-400">${so.length} orders</p>
+        <p class="text-sm font-extrabold text-amber-400">${omr(so.reduce((a, o) => a + (o.commission || 0), 0))} OMR</p></button>`;
+    }).join('');
+  } else sumWrap.classList.add('hidden');
+
+  const st = staffMembers.find(s => s.id === staffId);
+  $('earn-list-title').textContent = `Orders${st ? ' · ' + st.name : ''} (${list.length})`;
+
+  if (!list.length) {
+    $('earn-list').innerHTML = `<div class="card p-8 text-center text-slate-500 text-sm"><i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>Is period mein koi order nahi mila</div>`;
+    return;
+  }
+  $('earn-list').innerHTML = list.map(o => {
+    const picked = o.status === 'Picked Up';
+    const earned = (o.commission || 0) > 0;
+    return `<div class="card p-3.5">
+      <div class="flex justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-bold text-sm truncate">${esc(o.customerName)}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-calendar"></i> ${fmtDate(o.createdAt || Date.now())}${staffId === 'ALL' ? ' · <i class="fa-solid fa-user-tie"></i> ' + esc(o.staffName) : ''}</p>
+          ${o.notes ? `<p class="text-[11px] text-slate-500 mt-1 truncate"><i class="fa-solid fa-note-sticky"></i> ${esc(o.notes)}</p>` : ''}
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-sm font-extrabold text-emerald-400">${omr(o.amount)} <span class="text-[10px] font-semibold text-slate-500">OMR</span></p>
+          <p class="text-xs font-extrabold mt-0.5 ${earned ? 'text-amber-400' : 'text-slate-500'}">+${omr(o.commission)} earned</p>
+        </div>
+      </div>
+      <div class="mt-2.5 pt-2.5 border-t border-[#223052] flex items-center justify-between text-[11px]">
+        <span class="text-slate-400"><i class="fa-solid fa-phone"></i> ${esc(o.customerPhone)}</span>
+        <span class="px-2 py-0.5 rounded-md font-bold ${picked ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-400/15 text-amber-400'}">${picked ? 'Picked Up' : 'Pending'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+function pickEarnStaff(id) { $('earn-staff').value = id; renderEarnings(); $('screen-earnings').querySelector('.overflow-y-auto').scrollTop = 0; }
+
+// ---------- Modals ----------
+function openStaffModal() { renderModalStaffList(); $('modal-staff').classList.add('open'); }
+function closeStaffModal() { $('modal-staff').classList.remove('open'); $('input-staff-name').value = ''; }
+function openOrderModal(editId = null) {
+  populateStaffSelect();
+  const title = $('order-modal-title'), btn = $('order-submit-btn');
+  if (editId) {
+    const o = orders.find(x => x.id === editId);
+    if (o) {
+      $('edit-order-id').value = o.id;
+      title.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Order';
+      btn.textContent = 'Update Order';
+      $('order-staff-id').value = o.staffId;
+      $('order-customer-name').value = o.customerName;
+      $('order-customer-phone').value = o.customerPhone;
+      $('order-amount').value = o.amount;
+      $('order-pickup-time').value = o.pickupTime || '';
+      $('order-notes').value = o.notes || '';
+    }
+  } else {
+    $('edit-order-id').value = '';
+    title.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order';
+    btn.textContent = 'Save Order';
+    $('form-add-order').reset();
+  }
+  previewCommission();
+  $('modal-order').classList.add('open');
+}
+function closeOrderModal() { $('modal-order').classList.remove('open'); $('edit-order-id').value = ''; $('form-add-order').reset(); }
+function showConfirmModal(t, m, fn) { $('confirm-title').textContent = t; $('confirm-message').textContent = m; confirmActionHandler = fn; $('modal-confirm').classList.add('open'); }
+function closeConfirmModal() { $('modal-confirm').classList.remove('open'); confirmActionHandler = null; }
+$('confirm-btn-action').addEventListener('click', () => { if (confirmActionHandler) confirmActionHandler(); closeConfirmModal(); });
+
+function previewCommission() {
+  const c = calculateCommission($('order-amount').value);
+  $('commission-preview').textContent = `${omr(c)} OMR (${Math.round(c * 1000)} Baisa)`;
+}
+function populateStaffSelect() {
+  const sel = $('order-staff-id');
+  sel.innerHTML = staffMembers.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  fillStaffSelect($('filter-staff'), 'All Staff');
+}
+
+// ---------- Staff handlers ----------
+async function handleAddStaff(e) {
+  e.preventDefault();
+  const name = $('input-staff-name').value.trim();
+  if (!name) return;
+  const s = { id: 'stf_' + Date.now(), name, createdAt: Date.now() };
+  staffMembers.push(s); saveStaffLocal(); renderModalStaffList(); updateUI();
+  $('input-staff-name').value = '';
+  if (db) db.collection("staff").doc(s.id).set(s).catch(err => console.error(err));
+}
+function requestDeleteStaff(id) { showConfirmModal("Delete Staff?", "Is staff member ko remove karna hai?", () => executeDeleteStaff(id)); }
+async function executeDeleteStaff(id) {
+  staffMembers = staffMembers.filter(s => s.id !== id);
+  saveStaffLocal(); renderModalStaffList(); updateUI();
+  if (db) db.collection("staff").doc(id).delete().catch(err => console.error(err));
+}
+function renderModalStaffList() {
+  $('modal-staff-count').textContent = staffMembers.length;
+  const list = $('modal-staff-list');
+  if (!staffMembers.length) { list.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Koi staff nahi hai.</p>'; return; }
+  list.innerHTML = staffMembers.map(s => {
+    const so = orders.filter(o => o.staffId === s.id);
+    const tot = so.reduce((a, o) => a + (o.amount || 0), 0);
+    return `<div class="flex items-center justify-between bg-[#16213a] border border-[#223052] rounded-xl px-3 py-2.5">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="w-9 h-9 rounded-lg bg-amber-400/10 text-amber-400 font-extrabold flex items-center justify-center shrink-0">${esc(s.name.charAt(0).toUpperCase())}</span>
+        <div class="min-w-0"><p class="font-bold text-sm truncate">${esc(s.name)}</p><p class="text-[11px] text-slate-400">${so.length} orders · ${omr(tot)} OMR</p></div>
+      </div>
+      <button onclick="requestDeleteStaff('${esc(s.id)}')" class="w-9 h-9 rounded-lg text-rose-400 hover:bg-rose-500/10"><i class="fa-solid fa-trash-can"></i></button>
+    </div>`;
+  }).join('');
+}
+
+// ---------- Order handlers ----------
+async function handleSaveOrder(e) {
+  e.preventDefault();
+  const editId = $('edit-order-id').value;
+  const staffId = $('order-staff-id').value;
+  const amount = parseFloat($('order-amount').value) || 0;
+  const staff = staffMembers.find(s => s.id === staffId);
+  const data = {
+    staffId, staffName: staff ? staff.name : 'Unknown',
+    customerName: $('order-customer-name').value.trim(),
+    customerPhone: $('order-customer-phone').value.trim(),
+    amount, commission: calculateCommission(amount),
+    pickupTime: $('order-pickup-time').value,
+    notes: $('order-notes').value.trim()
+  };
+  closeOrderModal();
+  if (editId) {
+    const o = orders.find(x => x.id === editId);
+    if (o) {
+      Object.assign(o, data); saveOrdersLocal(); updateUI();
+      if (db) db.collection("orders").doc(editId).update(o).catch(err => console.error(err));
+    }
+  } else {
+    const n = { id: 'ord_' + Date.now(), ...data, status: 'Pending', createdAt: Date.now() };
+    orders.unshift(n); saveOrdersLocal(); updateUI();
+    if (db) db.collection("orders").doc(n.id).set(n).catch(err => console.error(err));
+  }
+}
+async function toggleOrderStatus(id) {
+  const o = orders.find(x => x.id === id); if (!o) return;
+  o.status = o.status === 'Pending' ? 'Picked Up' : 'Pending';
+  saveOrdersLocal(); updateUI();
+  if (db) db.collection("orders").doc(id).update({ status: o.status }).catch(err => console.error(err));
+}
+function requestDeleteOrder(id) { showConfirmModal("Delete Order?", "Is order ko delete karna hai?", () => executeDeleteOrder(id)); }
+async function executeDeleteOrder(id) {
+  orders = orders.filter(o => o.id !== id); saveOrdersLocal(); updateUI();
+  if (db) db.collection("orders").doc(id).delete().catch(err => console.error(err));
+}
+
+// ---------- Render ----------
+function updateUI() {
+  populateStaffSelect();
+  const f = getFilteredOrders();
+  renderMetrics(f); renderOrders(f); renderCharts(f); renderEarnings();
+}
+function renderMetrics(f) {
+  $('stat-total-revenue').textContent = omr(f.reduce((s, o) => s + (o.amount || 0), 0));
+  $('stat-total-commission').textContent = omr(f.reduce((s, o) => s + (o.commission || 0), 0));
+  $('stat-total-orders').textContent = f.length;
+  $('stat-pending-orders').textContent = `${f.filter(o => o.status === 'Pending').length} pending`;
+  $('stat-active-staff').textContent = staffMembers.length;
+}
+function renderOrders(filtered = getFilteredOrders()) {
+  const box = $('orders-grid-container');
+  const sid = $('filter-staff').value, st = $('filter-status').value;
+  const list = filtered.filter(o => (sid === 'ALL' || o.staffId === sid) && (st === 'ALL' || o.status === st));
+  $('orders-count').textContent = `(${list.length})`;
+  if (!list.length) { box.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500 text-sm">Koi order nahi mila.</div>'; return; }
+  box.innerHTML = list.map(o => {
+    const picked = o.status === 'Picked Up';
+    const pickup = o.pickupTime ? new Date(o.pickupTime).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+    const reward = (o.commission || 0) >= 0.9;
+    return `<div class="bg-[#16213a] border border-[#223052] rounded-2xl p-3.5 flex flex-col gap-3">
+      <div class="flex justify-between items-start gap-2">
+        <div class="min-w-0">
+          <p class="font-bold text-sm truncate">${esc(o.customerName)}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-solid fa-user-tie text-amber-400"></i> ${esc(o.staffName)}</p>
+        </div>
+        <div class="flex items-center shrink-0">
+          <p class="font-extrabold text-emerald-400 text-sm mr-1.5">${omr(o.amount)} <span class="text-[10px] text-slate-500">OMR</span></p>
+          <button onclick="openOrderModal('${esc(o.id)}')" class="w-8 h-8 rounded-lg text-amber-400 hover:bg-[#223052]"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button onclick="requestDeleteOrder('${esc(o.id)}')" class="w-8 h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-[#223052]"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+      </div>
+      <div class="flex justify-between text-[11px] text-slate-400">
+        <span><i class="fa-solid fa-phone"></i> ${esc(o.customerPhone)}</span>
+        <span><i class="fa-regular fa-clock"></i> ${pickup}</span>
+      </div>
+      ${o.notes ? `<p class="text-[11px] text-slate-400 bg-[#0e1628] rounded-lg px-2.5 py-1.5"><i class="fa-solid fa-note-sticky text-amber-400"></i> ${esc(o.notes)}</p>` : ''}
+      <div class="flex justify-between items-center pt-2.5 border-t border-[#223052]">
+        <span class="text-[11px] font-bold ${reward ? 'text-emerald-400' : 'text-slate-500'}"><i class="fa-solid ${reward ? 'fa-gift' : 'fa-circle-minus'}"></i> ${reward ? '900' : '0'} Baisa</span>
+        <button onclick="toggleOrderStatus('${esc(o.id)}')" class="px-3 py-1.5 rounded-lg text-xs font-bold ${picked ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40' : 'bg-amber-400/15 text-amber-400 border border-amber-400/40'}">
+          <i class="fa-solid ${picked ? 'fa-circle-check' : 'fa-clock'}"></i> ${picked ? 'Picked Up' : 'Pending'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderCharts(f) {
+  Chart.defaults.color = '#8b9ab8';
+  const names = staffMembers.map(s => s.name);
+  const vals = staffMembers.map(s => f.filter(o => o.staffId === s.id).reduce((a, o) => a + (o.commission || 0), 0));
+  if (staffChartInstance) staffChartInstance.destroy();
+  staffChartInstance = new Chart($('staffChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: names, datasets: [{ label: 'Reward (OMR)', data: vals, backgroundColor: 'rgba(245,165,36,.8)', borderRadius: 8, maxBarThickness: 46 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' } } } }
+  });
+  if (orderChartInstance) orderChartInstance.destroy();
+  orderChartInstance = new Chart($('orderTypeChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: ['Pending', 'Picked Up'], datasets: [{ data: [f.filter(o => o.status === 'Pending').length, f.filter(o => o.status === 'Picked Up').length], backgroundColor: ['#f5a524', '#10b981'], borderColor: '#111a2e', borderWidth: 3 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => { setupRealtimeListeners(); updateUI(); });
+</script>
 </body>
 </html>
