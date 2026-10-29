@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(db)/documents/users/$(request.auth.uid))
+        && get(/databases/$(db)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // pehla account admin banta hai (meta/admin ek hi baar ban sakta hai)
+    match /meta/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && id == 'admin' && !exists(/databases/$(db)/documents/meta/admin);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid && (
+        request.resource.data.role == 'staff' ||
+        (request.resource.data.role == 'admin' && !exists(/databases/$(db)/documents/meta/admin))
+      );
+      allow update: if signedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role;
+      allow delete: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // order: creator hi edit/delete kare, staff sirf apne order dekhe, admin sab dekhe
+    match /orders/{id} {
+      allow read: if signedIn() && (resource.data.get('creatorUid', null) == request.auth.uid || isAdmin());
+      allow create: if signedIn() && request.resource.data.creatorUid == request.auth.uid;
+      allow update, delete: if signedIn() && (
+        resource.data.get('creatorUid', null) == request.auth.uid ||
+        (isAdmin() && resource.data.get('creatorUid', null) == null)
+      );
+    }
+
+    // purana staff collection (ab use nahi hota)
+    match /staff/{id} { allow read: if isAdmin(); }
+  }
+}

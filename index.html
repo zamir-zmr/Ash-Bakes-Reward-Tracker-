@@ -4,125 +4,189 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0b1220">
-<title>Ash Bakes - Reward Tracker</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ash Rewards">
+<title>Ash Bakes - Reward Tracker v13</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-:root{--bg:#0b1220;--surface:#111a2e;--surface2:#16213a;--line:#223052;--muted:#8b9ab8;--accent:#f5a524;}
+:root{--bg:#0b1220;--surface:#111a2e;--surface2:#16213a;--line:#223052;--muted:#8b9ab8;--accent:#f5a524;--blue:#25b0d6}
 *{-webkit-tap-highlight-color:transparent}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:#e8edf7}
+html,body{background:var(--bg)}
+body{font-family:'Plus Jakarta Sans',sans-serif;color:#e8edf7}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px}
-.field{background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:#fff;font-size:13px;padding:9px 12px;outline:none;width:100%}
+.field{background:var(--surface2);border:1px solid var(--line);border-radius:12px;color:#fff;font-size:14px;padding:11px 13px;outline:none;width:100%}
 .field:focus{border-color:var(--accent)}
 select.field{appearance:none;-webkit-appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b9ab8' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
-input[type=date]{color-scheme:dark}
+input[type=date],input[type=datetime-local]{color-scheme:dark}
 .chip{padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;color:var(--muted);background:var(--surface2);border:1px solid var(--line);white-space:nowrap;transition:.15s}
 .chip.on{background:var(--accent);border-color:var(--accent);color:#1a1200}
 .label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-weight:800;font-size:14px;padding:12px 16px;transition:.15s}
+.btn-primary{background:var(--accent);color:#1a1200}
+.btn-ghost{background:var(--surface2);border:1px solid var(--line);color:#e8edf7}
+.btn-danger{background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.4);color:#fb7185}
+.btn:disabled{opacity:.55}
 .hide-scroll::-webkit-scrollbar{display:none}.hide-scroll{scrollbar-width:none}
-.screen{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility .25s}
-.screen.open{transform:none;visibility:visible}
+.layer{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility .25s}
+.layer.open{transform:none;visibility:visible}
 .overlay{position:fixed;inset:0;z-index:70;background:rgba(5,9,18,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:14px}
 .overlay.open{display:flex}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;min-width:0}
+.box .meta{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rew{font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;background:#1b2740;color:#64748b}
+.rew.on{background:rgba(245,165,36,.15);color:var(--accent)}
+.st{font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px}
+.st.p{background:rgba(245,165,36,.15);color:var(--accent)}.st.d{background:rgba(16,185,129,.15);color:#34d399}
+
+/* ---------- Splash (round animation) ---------- */
+#splash{position:fixed;inset:0;z-index:200;background:#0f121a;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s;overflow:hidden}
+#splash.out{opacity:0;visibility:hidden}
+#splash::before{content:"";position:absolute;inset:0;background:radial-gradient(520px 420px at 12% 34%,rgba(37,176,214,.30),transparent 62%),radial-gradient(520px 420px at 92% 72%,rgba(246,224,94,.18),transparent 62%)}
+.logo-wrap{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;z-index:1}
+.ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(37,176,214,0) 0 45%,#25b0d6 75%,#f6e05e 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));animation:spin 1.5s linear infinite}
+.ring-soft{position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(37,176,214,.28);animation:pulse 2s ease-out infinite}
+.logo{width:152px;height:152px;border-radius:50%;box-shadow:0 0 46px rgba(37,176,214,.45);animation:pop .9s cubic-bezier(.2,1.4,.4,1) both,float 3s ease-in-out .9s infinite}
+.s-title{position:relative;z-index:1;margin-top:34px;font-size:30px;font-weight:800;letter-spacing:.02em;background:linear-gradient(90deg,#f6e05e,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;animation:rise .8s .3s both}
+.s-sub{position:relative;z-index:1;margin-top:4px;font-size:13px;font-weight:600;color:#8b9ab8;letter-spacing:.2em;text-transform:uppercase;animation:rise .8s .45s both}
+.s-bar{position:relative;z-index:1;margin-top:28px;width:180px;height:4px;border-radius:4px;background:#1b2236;overflow:hidden}
+.s-bar i{display:block;height:100%;width:40%;border-radius:4px;background:linear-gradient(90deg,#25b0d6,#f6e05e);animation:load 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%{transform:scale(.92);opacity:.9}100%{transform:scale(1.18);opacity:0}}
+@keyframes pop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+@keyframes load{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;z-index:300;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;transition:.25s;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
-<body class="min-h-screen pb-10">
+<body>
 
-<!-- ================= HOME ================= -->
-<header class="sticky top-0 z-40 bg-[#0b1220]/95 backdrop-blur border-b border-[#223052]">
-  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-    <div class="flex items-center gap-3 min-w-0">
-      <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-cookie-bite"></i></div>
-      <div class="min-w-0">
-        <h1 class="font-extrabold text-lg leading-tight">Ash Bakes</h1>
-        <p class="text-[11px] text-slate-400 font-semibold">Reward Tracker</p>
+<!-- ============ SPLASH ============ -->
+<div id="splash">
+  <div class="logo-wrap"><div class="ring-soft"></div><div class="ring"></div><img class="logo" src="icon-512.png" alt="Ash Bakes"></div>
+  <h1 class="s-title">ASH BAKES</h1>
+  <p class="s-sub">Reward Tracker</p>
+  <div class="s-bar"><i></i></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ============ AUTH ============ -->
+<div id="auth" class="hidden fixed inset-0 z-[90] overflow-y-auto" style="background:radial-gradient(500px 380px at 10% 10%,rgba(37,176,214,.22),transparent 60%),radial-gradient(500px 380px at 95% 90%,rgba(246,224,94,.12),transparent 60%),#0b1220">
+  <div class="min-h-full flex items-center justify-center p-5">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-6">
+        <img src="icon-512.png" class="w-24 h-24 rounded-full mx-auto shadow-[0_0_40px_rgba(37,176,214,.4)]" alt="">
+        <h1 class="mt-4 text-2xl font-extrabold">Ash Bakes</h1>
+        <p class="text-xs text-slate-400 font-semibold tracking-widest uppercase mt-1">Reward Tracker</p>
+      </div>
+      <div class="card p-5">
+        <div class="grid grid-cols-2 gap-2 mb-4 p-1 rounded-xl bg-[#0e1628]">
+          <button id="tab-login" onclick="setAuthMode('login')" class="chip on">Login</button>
+          <button id="tab-register" onclick="setAuthMode('register')" class="chip">Create account</button>
+        </div>
+        <form onsubmit="handleAuth(event)" class="space-y-3" autocomplete="on">
+          <div id="auth-name-wrap" class="hidden"><p class="label mb-1">Full name</p><input id="auth-name" class="field" placeholder="e.g. Zamir Ansari" autocomplete="name"></div>
+          <div><p class="label mb-1">Username</p><input id="auth-user" class="field" placeholder="e.g. zamir" autocapitalize="none" autocomplete="username" required></div>
+          <div><p class="label mb-1">Password</p><input id="auth-pass" type="password" class="field" placeholder="min 6 characters" autocomplete="current-password" required></div>
+          <p id="auth-err" class="text-xs font-semibold text-rose-400 hidden"></p>
+          <button id="auth-btn" type="submit" class="btn btn-primary w-full">Login</button>
+        </form>
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <button onclick="openStaffModal()" class="h-10 px-3.5 rounded-xl bg-[#16213a] border border-[#223052] text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-users text-amber-400"></i><span class="hidden sm:inline">Staff</span></button>
-      <button onclick="openOrderModal()" class="h-10 px-4 rounded-xl bg-amber-400 text-slate-900 text-sm font-extrabold flex items-center gap-2"><i class="fa-solid fa-plus"></i> New Order</button>
-    </div>
+  </div>
+</div>
+
+<!-- ============ HOME ============ -->
+<div id="app" class="hidden">
+<header class="sticky top-0 z-40 bg-[#0b1220]/95 backdrop-blur border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <button onclick="openAccount()" class="flex items-center gap-3 min-w-0 text-left">
+      <span id="hdr-avatar" class="w-11 h-11 rounded-full bg-gradient-to-br from-sky-400 to-amber-300 text-slate-900 font-extrabold text-lg flex items-center justify-center shrink-0 ring-2 ring-sky-400/30">?</span>
+      <span class="min-w-0">
+        <span id="hdr-name" class="block font-extrabold text-sm truncate">...</span>
+        <span id="hdr-role" class="block text-[11px] text-slate-400 font-semibold">Account <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+      </span>
+    </button>
+    <button onclick="openOrderModal()" class="btn btn-primary !py-2.5 shrink-0"><i class="fa-solid fa-plus"></i> New Order</button>
   </div>
 </header>
 
 <main class="max-w-5xl mx-auto px-4 pt-4 space-y-4">
 
-  <!-- Home period filter -->
-  <section>
-    <div class="flex gap-2 overflow-x-auto hide-scroll pb-1" id="home-chips">
+  <!-- Today -->
+  <section class="rounded-2xl p-4 border border-amber-400/25" style="background:linear-gradient(135deg,rgba(37,176,214,.14),rgba(245,165,36,.12))">
+    <p class="label mb-3" id="today-label">Aaj ka hisab</p>
+    <div class="grid grid-cols-3 gap-3">
+      <div><p class="text-[11px] text-slate-400 font-semibold">Orders</p><p class="text-2xl font-extrabold" id="today-orders">0</p></div>
+      <div><p class="text-[11px] text-slate-400 font-semibold">Sales (OMR)</p><p class="text-2xl font-extrabold text-emerald-400" id="today-sales">0.000</p></div>
+      <div><p class="text-[11px] text-slate-400 font-semibold">Earned (OMR)</p><p class="text-2xl font-extrabold text-amber-400" id="today-earned">0.000</p></div>
+    </div>
+    <p class="text-[11px] text-slate-400 mt-3"><i class="fa-solid fa-gift text-amber-400"></i> 20 OMR ya usse upar ke order par 1 OMR reward, warna 0</p>
+  </section>
+
+  <!-- Nav tiles -->
+  <section class="grid grid-cols-2 gap-3">
+    <button onclick="openEarningsHome()" class="card p-4 text-left hover:border-amber-400/60 transition">
+      <span class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/25 flex items-center justify-center mb-3"><i class="fa-solid fa-wallet"></i></span>
+      <p class="font-extrabold text-sm leading-tight">Staff Earnings Breakdown</p>
+      <p class="text-[11px] text-slate-400 mt-1">Staff / date wise orders</p>
+    </button>
+    <button onclick="openMonths()" class="card p-4 text-left hover:border-sky-400/60 transition">
+      <span class="w-10 h-10 rounded-xl bg-sky-400/10 text-sky-400 border border-sky-400/25 flex items-center justify-center mb-3"><i class="fa-solid fa-calendar-days"></i></span>
+      <p class="font-extrabold text-sm leading-tight">Monthly Summary</p>
+      <p class="text-[11px] text-slate-400 mt-1">Month end total + purane months</p>
+    </button>
+  </section>
+
+  <!-- Active orders -->
+  <section class="card p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-extrabold text-[15px] flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-amber-400"></i> Active Orders <span class="text-xs font-bold text-slate-500" id="orders-count"></span></h2>
+    </div>
+    <div class="flex gap-2 overflow-x-auto hide-scroll pb-2" id="home-chips">
       <button class="chip on" data-r="ALL" onclick="setHomeRange('ALL')">All Time</button>
       <button class="chip" data-r="TODAY" onclick="setHomeRange('TODAY')">Today</button>
       <button class="chip" data-r="YESTERDAY" onclick="setHomeRange('YESTERDAY')">Yesterday</button>
       <button class="chip" data-r="MONTH" onclick="setHomeRange('MONTH')">This Month</button>
       <button class="chip" data-r="CUSTOM" onclick="setHomeRange('CUSTOM')">Manually</button>
     </div>
-    <div id="home-custom" class="hidden grid grid-cols-2 gap-2 mt-2">
-      <input type="date" id="home-start" class="field" onchange="updateUI()">
-      <input type="date" id="home-end" class="field" onchange="updateUI()">
+    <div id="home-custom" class="hidden grid grid-cols-2 gap-2 mb-2">
+      <input type="date" id="home-start" class="field" onchange="renderOrders()">
+      <input type="date" id="home-end" class="field" onchange="renderOrders()">
     </div>
-  </section>
-
-  <!-- KPIs -->
-  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="card p-4"><p class="label">Revenue</p><p class="text-xl font-extrabold text-emerald-400 mt-1.5" id="stat-total-revenue">0.000</p><p class="text-[11px] text-slate-500 font-semibold">OMR</p></div>
-    <div class="card p-4"><p class="label">Rewards</p><p class="text-xl font-extrabold text-amber-400 mt-1.5" id="stat-total-commission">0.000</p><p class="text-[11px] text-slate-500 font-semibold">OMR</p></div>
-    <div class="card p-4"><p class="label">Orders</p><p class="text-xl font-extrabold mt-1.5" id="stat-total-orders">0</p><p class="text-[11px] text-slate-500 font-semibold" id="stat-pending-orders">0 pending</p></div>
-    <div class="card p-4"><p class="label">Staff</p><p class="text-xl font-extrabold text-violet-300 mt-1.5" id="stat-active-staff">0</p><p class="text-[11px] text-slate-500 font-semibold">members</p></div>
-  </section>
-
-  <!-- Earnings button -->
-  <button onclick="openEarnings()" class="w-full card p-4 flex items-center gap-4 text-left hover:border-amber-400/60 transition">
-    <div class="w-12 h-12 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/25 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-wallet"></i></div>
-    <div class="flex-1 min-w-0">
-      <p class="font-extrabold text-[15px]">Staff Earnings Breakdown</p>
-      <p class="text-xs text-slate-400 mt-0.5">Staff aur date ke hisab se orders aur earnings dekhein</p>
-    </div>
-    <i class="fa-solid fa-chevron-right text-slate-500"></i>
-  </button>
-
-  <!-- Active Orders -->
-  <section class="card p-4">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-      <h2 class="font-extrabold text-[15px] flex items-center gap-2"><i class="fa-solid fa-boxes-stacked text-amber-400"></i> Active Orders <span class="text-xs font-bold text-slate-500" id="orders-count"></span></h2>
-      <div class="grid grid-cols-2 gap-2 w-full sm:w-auto sm:min-w-[320px]">
-        <select id="filter-staff" onchange="renderOrders()" class="field"><option value="ALL">All Staff</option></select>
-        <select id="filter-status" onchange="renderOrders()" class="field">
-          <option value="ALL">All Status</option><option value="Pending">Pending Pickup</option><option value="Picked Up">Picked Up</option>
-        </select>
-      </div>
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      <select id="filter-staff" onchange="renderOrders()" class="field"><option value="ALL">All Staff</option></select>
+      <select id="filter-status" onchange="renderOrders()" class="field">
+        <option value="ALL">All Status</option><option value="Pending">Pending Pickup</option><option value="Picked Up">Picked Up</option>
+      </select>
     </div>
     <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
   </section>
-
-  <!-- Charts -->
-  <section class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-    <div class="card p-4 lg:col-span-2">
-      <h2 class="font-extrabold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-column text-amber-400"></i> Rewards by Staff</h2>
-      <div class="h-48 relative"><canvas id="staffChart"></canvas></div>
-    </div>
-    <div class="card p-4">
-      <h2 class="font-extrabold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-amber-400"></i> Pickup Status</h2>
-      <div class="h-48 relative"><canvas id="orderTypeChart"></canvas></div>
-    </div>
-  </section>
 </main>
+</div>
 
-<!-- ================= FULL SCREEN: STAFF EARNINGS ================= -->
-<div id="screen-earnings" class="screen" aria-hidden="true">
+<!-- ============ LAYER: STAFF EARNINGS ============ -->
+<div id="screen-earnings" class="layer">
   <header class="shrink-0 bg-[#0b1220] border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
     <div class="max-w-3xl mx-auto w-full px-4 h-14 flex items-center justify-between">
       <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2.5"><i class="fa-solid fa-wallet text-amber-400"></i> Staff Earnings Breakdown</h2>
-      <button onclick="closeEarnings()" title="Close" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center text-lg transition"><i class="fa-solid fa-xmark"></i></button>
+      <button onclick="closeLayer()" title="Close" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center text-lg transition"><i class="fa-solid fa-xmark"></i></button>
     </div>
   </header>
-
   <div class="shrink-0 border-b border-[#223052] bg-[#0e1628]">
     <div class="max-w-3xl mx-auto w-full px-4 py-3 space-y-3">
-      <select id="earn-staff" onchange="renderEarnings()" class="field"><option value="ALL">All Staff</option></select>
+      <div id="earn-staff-wrap"><select id="earn-staff" onchange="renderEarnings()" class="field"><option value="ALL">All Staff</option></select></div>
       <div class="flex gap-2 overflow-x-auto hide-scroll" id="earn-chips">
         <button class="chip" data-r="TODAY" onclick="setEarnRange('TODAY')">Today</button>
         <button class="chip" data-r="YESTERDAY" onclick="setEarnRange('YESTERDAY')">Yesterday</button>
@@ -135,45 +199,86 @@ input[type=date]{color-scheme:dark}
       </div>
     </div>
   </div>
-
-  <div class="flex-1 overflow-y-auto">
+  <div class="flex-1 overflow-y-auto" id="earn-scroll">
     <div class="max-w-3xl mx-auto w-full px-4 py-4 space-y-4">
-      <div class="grid grid-cols-3 gap-2.5">
-        <div class="card p-3"><p class="label">Orders</p><p class="text-lg font-extrabold mt-1" id="earn-orders">0</p></div>
-        <div class="card p-3"><p class="label">Sales</p><p class="text-lg font-extrabold text-emerald-400 mt-1" id="earn-sales">0.000</p></div>
-        <div class="card p-3 border-amber-400/40"><p class="label">Earnings</p><p class="text-lg font-extrabold text-amber-400 mt-1" id="earn-total">0.000</p></div>
-      </div>
-
       <div id="earn-staff-summary" class="hidden">
         <p class="label mb-2">Per staff</p>
         <div id="earn-staff-list" class="flex gap-2.5 overflow-x-auto hide-scroll pb-1"></div>
       </div>
+      <div id="earn-line" class="text-xs font-bold text-slate-300 bg-[#111a2e] border border-[#223052] rounded-xl px-3 py-2.5"></div>
+      <div id="earn-days" class="space-y-5"></div>
+    </div>
+  </div>
+</div>
 
-      <div>
-        <p class="label mb-2" id="earn-list-title">Orders</p>
-        <div id="earn-list" class="space-y-2.5"></div>
+<!-- ============ LAYER: MONTHLY SUMMARY ============ -->
+<div id="screen-months" class="layer">
+  <header class="shrink-0 bg-[#0b1220] border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
+    <div class="max-w-3xl mx-auto w-full px-4 h-14 flex items-center justify-between">
+      <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2.5"><i class="fa-solid fa-calendar-days text-sky-400"></i> Monthly Summary</h2>
+      <button onclick="closeLayer()" title="Close" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center text-lg transition"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </header>
+  <div class="flex-1 overflow-y-auto">
+    <div class="max-w-3xl mx-auto w-full px-4 py-4 space-y-3" id="months-list"></div>
+  </div>
+</div>
+
+<!-- ============ LAYER: ACCOUNT ============ -->
+<div id="screen-account" class="layer">
+  <header class="shrink-0 bg-[#0b1220] border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
+    <div class="max-w-3xl mx-auto w-full px-4 h-14 flex items-center justify-between">
+      <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2.5"><i class="fa-solid fa-user-gear text-amber-400"></i> My Account</h2>
+      <button onclick="closeLayer()" title="Close" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center text-lg transition"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </header>
+  <div class="flex-1 overflow-y-auto">
+    <div class="max-w-md mx-auto w-full px-4 py-5 space-y-4">
+      <div class="card p-5 text-center">
+        <div class="relative w-20 h-20 mx-auto">
+          <span id="acc-avatar" class="w-20 h-20 rounded-full bg-gradient-to-br from-sky-400 to-amber-300 text-slate-900 font-extrabold text-3xl flex items-center justify-center">?</span>
+          <img src="icon-192.png" class="absolute -right-1 -bottom-1 w-8 h-8 rounded-full border-2 border-[#111a2e]" alt="">
+        </div>
+        <p class="font-extrabold text-lg mt-3" id="acc-name">-</p>
+        <p class="text-xs text-slate-400 font-semibold" id="acc-user">-</p>
+        <span id="acc-role" class="inline-block mt-2 st p">Staff</span>
+      </div>
+
+      <form onsubmit="changePassword(event)" class="card p-5 space-y-3">
+        <h3 class="font-extrabold text-sm flex items-center gap-2"><i class="fa-solid fa-key text-amber-400"></i> Change password</h3>
+        <input type="password" id="pw-cur" class="field" placeholder="Current password" autocomplete="current-password" required>
+        <input type="password" id="pw-new" class="field" placeholder="New password (min 6)" autocomplete="new-password" required>
+        <input type="password" id="pw-new2" class="field" placeholder="Confirm new password" autocomplete="new-password" required>
+        <button id="pw-btn" class="btn btn-primary w-full" type="submit">Update password</button>
+      </form>
+
+      <button id="install-btn" onclick="installApp()" class="btn btn-ghost w-full hidden"><i class="fa-solid fa-download"></i> Install app</button>
+      <button onclick="doLogout()" class="btn btn-ghost w-full"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+
+      <div class="card p-5 border-rose-500/30">
+        <h3 class="font-extrabold text-sm flex items-center gap-2 text-rose-400"><i class="fa-solid fa-triangle-exclamation"></i> Danger zone</h3>
+        <p class="text-xs text-slate-400 mt-1.5 mb-3">Account remove karne par login hamesha ke liye band ho jayega.</p>
+        <button onclick="openLayer('modal-remove')" class="btn btn-danger w-full"><i class="fa-solid fa-user-xmark"></i> Remove account</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ================= MODAL: STAFF ================= -->
-<div id="modal-staff" class="overlay">
-  <div class="card w-full max-w-md p-5 max-h-[90vh] flex flex-col">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-extrabold text-base flex items-center gap-2"><i class="fa-solid fa-users text-amber-400"></i> Manage Staff</h3>
-      <button onclick="closeStaffModal()" class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+<!-- ============ MODAL: REMOVE ACCOUNT ============ -->
+<div id="modal-remove" class="overlay" style="z-index:75">
+  <form onsubmit="removeAccount(event)" class="card w-full max-w-sm p-5 space-y-3">
+    <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto text-xl"><i class="fa-solid fa-user-xmark"></i></div>
+    <h3 class="font-extrabold text-center">Account remove karein?</h3>
+    <p class="text-xs text-slate-400 text-center">Confirm karne ke liye apna password daalein.</p>
+    <input type="password" id="rm-pass" class="field" placeholder="Password" autocomplete="current-password" required>
+    <div class="flex gap-2">
+      <button type="button" onclick="closeLayer()" class="btn btn-ghost flex-1">Cancel</button>
+      <button id="rm-btn" type="submit" class="btn flex-1 bg-rose-500 text-white">Remove</button>
     </div>
-    <form id="form-add-staff" onsubmit="handleAddStaff(event)" class="flex gap-2 mb-4">
-      <input type="text" id="input-staff-name" required placeholder="New staff name" class="field">
-      <button type="submit" class="px-4 rounded-xl bg-amber-400 text-slate-900 font-extrabold text-sm shrink-0"><i class="fa-solid fa-plus"></i> Add</button>
-    </form>
-    <p class="label mb-2">All staff (<span id="modal-staff-count">0</span>)</p>
-    <div id="modal-staff-list" class="space-y-2 overflow-y-auto"></div>
-  </div>
+  </form>
 </div>
 
-<!-- ================= MODAL: ORDER ================= -->
+<!-- ============ MODAL: ORDER ============ -->
 <div id="modal-order" class="overlay">
   <div class="card w-full max-w-md p-5 max-h-[92vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-4">
@@ -182,43 +287,42 @@ input[type=date]{color-scheme:dark}
     </div>
     <form id="form-add-order" onsubmit="handleSaveOrder(event)" class="space-y-3">
       <input type="hidden" id="edit-order-id" value="">
-      <div><p class="label mb-1">Staff member</p><select id="order-staff-id" required class="field"></select></div>
       <div class="grid grid-cols-2 gap-2.5">
         <div><p class="label mb-1">Customer</p><input type="text" id="order-customer-name" required placeholder="e.g. Salim" class="field"></div>
         <div><p class="label mb-1">Phone</p><input type="tel" id="order-customer-phone" required placeholder="968xxxxxxx" class="field"></div>
       </div>
       <div class="grid grid-cols-2 gap-2.5">
-        <div><p class="label mb-1">Amount (OMR)</p><input type="number" step="0.100" min="0.100" id="order-amount" required oninput="previewCommission()" placeholder="20.000" class="field"></div>
-        <div><p class="label mb-1">Pickup time</p><input type="datetime-local" id="order-pickup-time" required class="field" style="color-scheme:dark"></div>
+        <div><p class="label mb-1">Amount (OMR)</p><input type="number" step="0.001" min="0.001" id="order-amount" required oninput="previewReward()" placeholder="20.000" class="field"></div>
+        <div><p class="label mb-1">Pickup time</p><input type="datetime-local" id="order-pickup-time" required class="field"></div>
       </div>
       <div><p class="label mb-1">Notes / items</p><input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="field"></div>
       <div class="rounded-xl bg-amber-400/10 border border-amber-400/30 px-3 py-2.5 flex justify-between items-center text-xs">
-        <span class="text-slate-300 font-semibold">Estimated reward</span>
-        <span id="commission-preview" class="font-extrabold text-amber-400">0.000 OMR (0 Baisa)</span>
+        <span class="text-slate-300 font-semibold">Is order ka reward</span>
+        <span id="reward-preview" class="font-extrabold text-amber-400">0.000 OMR</span>
       </div>
       <div class="flex justify-end gap-2 pt-1">
-        <button type="button" onclick="closeOrderModal()" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400">Cancel</button>
-        <button type="submit" id="order-submit-btn" class="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-900 font-extrabold text-sm">Save Order</button>
+        <button type="button" onclick="closeOrderModal()" class="btn btn-ghost !py-2.5">Cancel</button>
+        <button type="submit" id="order-submit-btn" class="btn btn-primary !py-2.5">Save Order</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- ================= MODAL: CONFIRM ================= -->
+<!-- ============ MODAL: CONFIRM ============ -->
 <div id="modal-confirm" class="overlay" style="z-index:80">
   <div class="card w-full max-w-xs p-5 text-center">
     <div class="w-12 h-12 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
     <h3 class="font-extrabold text-sm mb-1" id="confirm-title">Confirm</h3>
     <p class="text-xs text-slate-400 mb-5" id="confirm-message"></p>
     <div class="flex justify-center gap-2.5">
-      <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400">Cancel</button>
-      <button id="confirm-btn-action" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-500 text-white">Delete</button>
+      <button onclick="closeLayer()" class="btn btn-ghost !py-2 !text-xs">Cancel</button>
+      <button id="confirm-btn-action" class="btn !py-2 !text-xs bg-rose-500 text-white">Delete</button>
     </div>
   </div>
 </div>
 
 <script>
-// ---------- Firebase ----------
+// ================= Firebase =================
 const firebaseConfig = {
             apiKey: "AIzaSyAQamkgnBESFuGEoHCoqtsn-hR-z1Gzh_s",
             authDomain: "ashbakesrewardtracker.firebaseapp.com",
@@ -227,33 +331,264 @@ const firebaseConfig = {
             messagingSenderId: "62622240064",
             appId: "1:62622240064:web:cdceb080627e6d4ed7fea5"
         };
-let db = null;
-try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }
-catch (e) { console.warn("Firebase offline fallback mode enabled.", e); }
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
-// ---------- State ----------
-let staffMembers = JSON.parse(localStorage.getItem('ash_staff') || '[]');
-let orders = JSON.parse(localStorage.getItem('ash_orders') || '[]');
-let homeRange = 'ALL';
-let earnRange = 'MONTH';
-let staffChartInstance = null, orderChartInstance = null, confirmActionHandler = null;
+// ================= Constants / State =================
+const EMAIL_DOMAIN = '@ashbakes.app';
+const REWARD_MIN = 20, REWARD_AMT = 1;
+let me = null;               // {uid,name,username,role}
+let orders = [], users = [];
+let dataUnsubs = [], profileUnsub = null;
+let registering = false, removing = false, authMode = 'login';
+let homeRange = 'ALL', earnRange = 'MONTH';
+let confirmActionHandler = null, deferredInstall = null;
+const splashStart = Date.now();
 
-if (staffMembers.length === 0) {
-  staffMembers = [
-    { id: 'stf_1', name: 'Zamir Ansari', createdAt: Date.now() },
-    { id: 'stf_2', name: 'Sojib', createdAt: Date.now() }
-  ];
-  saveStaffLocal();
-}
-
-// ---------- Helpers ----------
+// ================= Helpers =================
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const omr = n => (n || 0).toFixed(3);
-function calculateCommission(a) { return (parseFloat(a) || 0) >= 20 ? 0.9 : 0; }
-function saveStaffLocal() { localStorage.setItem('ash_staff', JSON.stringify(staffMembers)); }
-function saveOrdersLocal() { localStorage.setItem('ash_orders', JSON.stringify(orders)); }
+const omr = n => (Number(n) || 0).toFixed(3);
+const reward = o => (Number(o.amount) || 0) >= REWARD_MIN ? REWARD_AMT : 0;
+const isAdmin = () => !!me && me.role === 'admin';
+const ownerKey = o => o.creatorUid || o.staffId || 'unknown';
+const canEdit = o => !!me && (o.creatorUid === me.uid || (isAdmin() && !o.creatorUid));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmtTime = ts => new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const fmtDay = ts => new Date(ts).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+const fmtPickup = v => v ? new Date(v).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'N/A';
 
+function toast(msg, type) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.style.background = type === 'err' ? '#be123c' : '#0f766e';
+  t.style.color = '#fff';
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function authError(e) {
+  const c = e && e.code || '';
+  const map = {
+    'auth/wrong-password': 'Password galat hai',
+    'auth/invalid-credential': 'Username ya password galat hai',
+    'auth/invalid-login-credentials': 'Username ya password galat hai',
+    'auth/user-not-found': 'Yeh username nahi mila',
+    'auth/email-already-in-use': 'Yeh username pehle se liya hua hai',
+    'auth/weak-password': 'Password kam se kam 6 characters ka rakhein',
+    'auth/network-request-failed': 'Internet check karein',
+    'auth/too-many-requests': 'Bahut koshish ho gayi, thodi der baad try karein',
+    'auth/requires-recent-login': 'Dobara login karke try karein',
+    'auth/operation-not-allowed': 'Firebase Console mein Email/Password sign-in enable karein',
+    'permission-denied': 'Permission denied - Firestore rules publish karein'
+  };
+  return map[c] || (e && e.message) || 'Kuch galat hua';
+}
+
+// ================= Layers + back button =================
+const navStack = [];
+function openLayer(id) {
+  const el = $(id);
+  if (el.classList.contains('open')) return;
+  el.classList.add('open');
+  navStack.push(id);
+  history.pushState({ layer: id }, '');
+  lockBody();
+}
+function closeLayer() { if (navStack.length) history.back(); }
+function resetLayers() { navStack.splice(0).forEach(id => $(id).classList.remove('open')); lockBody(); }
+function lockBody() { document.body.style.overflow = navStack.length ? 'hidden' : ''; }
+window.addEventListener('popstate', () => {
+  const id = navStack.pop();
+  if (id) $(id).classList.remove('open');
+  lockBody();
+});
+
+// ================= Splash =================
+function hideSplash() {
+  const wait = Math.max(0, 1900 - (Date.now() - splashStart));
+  setTimeout(() => $('splash').classList.add('out'), wait);
+}
+
+// ================= Auth UI =================
+function setAuthMode(m) {
+  authMode = m;
+  $('tab-login').classList.toggle('on', m === 'login');
+  $('tab-register').classList.toggle('on', m === 'register');
+  $('auth-name-wrap').classList.toggle('hidden', m !== 'register');
+  $('auth-btn').textContent = m === 'login' ? 'Login' : 'Create account';
+  $('auth-pass').autocomplete = m === 'login' ? 'current-password' : 'new-password';
+  $('auth-err').classList.add('hidden');
+}
+function authMsg(t) { const e = $('auth-err'); e.textContent = t; e.classList.toggle('hidden', !t); }
+function showAuth() { $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); }
+function showApp() { $('auth').classList.add('hidden'); $('app').classList.remove('hidden'); }
+
+async function handleAuth(e) {
+  e.preventDefault();
+  authMsg('');
+  const uname = $('auth-user').value.trim().toLowerCase().replace(/\s+/g, '');
+  const pass = $('auth-pass').value;
+  const name = $('auth-name').value.trim();
+  if (!/^[a-z0-9._-]{3,}$/.test(uname)) return authMsg('Username 3+ characters: letters, numbers, . _ -');
+  if (pass.length < 6) return authMsg('Password kam se kam 6 characters ka rakhein');
+  if (authMode === 'register' && !name) return authMsg('Apna naam likhein');
+  const btn = $('auth-btn'); btn.disabled = true;
+  try {
+    if (authMode === 'login') {
+      await auth.signInWithEmailAndPassword(uname + EMAIL_DOMAIN, pass);
+    } else {
+      registering = true;
+      const cred = await auth.createUserWithEmailAndPassword(uname + EMAIL_DOMAIN, pass);
+      await cred.user.updateProfile({ displayName: name });
+      try { await startSession(cred.user, name); }
+      catch (err) { throw err; }
+      finally { registering = false; }
+    }
+  } catch (err) {
+    registering = false;
+    console.error(err);
+    authMsg(authError(err));
+    if (authMode === 'register' && auth.currentUser) { try { await auth.signOut(); } catch (_) {} }
+  } finally { btn.disabled = false; }
+}
+
+// ================= Session =================
+auth.onAuthStateChanged(async user => {
+  if (registering) return;
+  if (!user) { endSession(); showAuth(); hideSplash(); return; }
+  try { await startSession(user, user.displayName); }
+  catch (err) {
+    console.error(err);
+    toast(authError(err), 'err');
+    await auth.signOut();
+  }
+});
+
+async function ensureProfile(user, name) {
+  const ref = db.collection('users').doc(user.uid);
+  const s = await ref.get();
+  if (s.exists) return { uid: user.uid, ...s.data() };
+  const uname = (user.email || '').split('@')[0];
+  const adminDoc = await db.collection('meta').doc('admin').get();
+  const role = adminDoc.exists ? 'staff' : 'admin';
+  const prof = { name: name || uname, username: uname, role, createdAt: Date.now() };
+  const batch = db.batch();
+  batch.set(ref, prof);
+  if (role === 'admin') batch.set(db.collection('meta').doc('admin'), { uid: user.uid, createdAt: Date.now() });
+  await batch.commit();
+  return { uid: user.uid, ...prof };
+}
+
+async function startSession(user, name) {
+  me = await ensureProfile(user, name);
+  showApp();
+  renderHeader();
+  if (profileUnsub) profileUnsub();
+  profileUnsub = db.collection('users').doc(user.uid).onSnapshot(s => {
+    if (!s.exists) {
+      if (!removing && !registering) { toast('Account remove ho gaya hai', 'err'); auth.signOut(); }
+      return;
+    }
+    const prevRole = me && me.role;
+    me = { uid: user.uid, ...s.data() };
+    renderHeader();
+    if (prevRole !== me.role) subscribeData(); else updateUI();
+  }, err => console.error(err));
+  subscribeData();
+  hideSplash();
+}
+
+function endSession() {
+  dataUnsubs.forEach(f => f()); dataUnsubs = [];
+  if (profileUnsub) { profileUnsub(); profileUnsub = null; }
+  me = null; orders = []; users = [];
+  resetLayers();
+}
+
+function subscribeData() {
+  dataUnsubs.forEach(f => f()); dataUnsubs = [];
+  const col = db.collection('orders');
+  const q = isAdmin() ? col : col.where('creatorUid', '==', me.uid);
+  dataUnsubs.push(q.onSnapshot(snap => {
+    orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateUI();
+  }, err => { console.error(err); toast('Orders load nahi hue: ' + authError(err), 'err'); }));
+  if (isAdmin()) {
+    dataUnsubs.push(db.collection('users').onSnapshot(snap => {
+      users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+      updateUI();
+    }, err => console.error(err)));
+  } else users = [{ uid: me.uid, name: me.name }];
+}
+
+function renderHeader() {
+  if (!me) return;
+  const init = (me.name || '?').trim().charAt(0).toUpperCase();
+  $('hdr-avatar').textContent = init;
+  $('hdr-name').textContent = me.name;
+  $('hdr-role').innerHTML = (isAdmin() ? 'Admin' : 'Staff') + ' <i class="fa-solid fa-chevron-right text-[8px]"></i>';
+  $('acc-avatar').textContent = init;
+  $('acc-name').textContent = me.name;
+  $('acc-user').textContent = '@' + (me.username || '');
+  $('acc-role').textContent = isAdmin() ? 'Admin - sab orders dekh sakta hai' : 'Staff - sirf apne orders';
+  $('today-label').textContent = isAdmin() ? 'Aaj ka hisab - sab staff' : 'Aaj ka hisab';
+  $('filter-staff').parentElement.classList.toggle('grid-cols-2', isAdmin());
+  $('filter-staff').parentElement.classList.toggle('grid-cols-1', !isAdmin());
+  $('filter-staff').classList.toggle('hidden', !isAdmin());
+  $('earn-staff-wrap').classList.toggle('hidden', !isAdmin());
+}
+
+// ================= Account actions =================
+function openAccount() { openLayer('screen-account'); }
+async function doLogout() { resetLayers(); await auth.signOut(); }
+
+async function changePassword(e) {
+  e.preventDefault();
+  const cur = $('pw-cur').value, nw = $('pw-new').value, nw2 = $('pw-new2').value;
+  if (nw.length < 6) return toast('Naya password kam se kam 6 characters', 'err');
+  if (nw !== nw2) return toast('Dono naye password match nahi karte', 'err');
+  const btn = $('pw-btn'); btn.disabled = true;
+  try {
+    const u = auth.currentUser;
+    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, cur));
+    await u.updatePassword(nw);
+    e.target.reset();
+    toast('Password badal gaya');
+  } catch (err) { console.error(err); toast(authError(err), 'err'); }
+  btn.disabled = false;
+}
+
+async function removeAccount(e) {
+  e.preventDefault();
+  const btn = $('rm-btn'); btn.disabled = true;
+  removing = true;
+  try {
+    const u = auth.currentUser;
+    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, $('rm-pass').value));
+    const batch = db.batch();
+    batch.delete(db.collection('users').doc(u.uid));
+    if (isAdmin()) batch.delete(db.collection('meta').doc('admin'));
+    await batch.commit();
+    await u.delete();
+    resetLayers();
+    toast('Account remove ho gaya');
+  } catch (err) { console.error(err); toast(authError(err), 'err'); }
+  removing = false; btn.disabled = false; $('rm-pass').value = '';
+}
+
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('install-btn').classList.remove('hidden'); });
+async function installApp() {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null; $('install-btn').classList.add('hidden');
+}
+
+// ================= Date filters =================
 function inRange(o, mode, startStr, endStr) {
   const d = new Date(o.createdAt || Date.now()), now = new Date();
   if (mode === 'TODAY') return d.toDateString() === now.toDateString();
@@ -269,299 +604,274 @@ function inRange(o, mode, startStr, endStr) {
 function setChips(containerId, mode) {
   document.querySelectorAll('#' + containerId + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.r === mode));
 }
-const fmtDate = ts => new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-
-// ---------- Realtime ----------
-function setupRealtimeListeners() {
-  if (!db) return;
-  db.collection("staff").onSnapshot(snap => {
-    if (!snap.empty) { staffMembers = snap.docs.map(d => ({ id: d.id, ...d.data() })); saveStaffLocal(); }
-    else if (staffMembers.length > 0) staffMembers.forEach(s => db.collection("staff").doc(s.id).set(s));
-    updateUI();
-    if ($('modal-staff').classList.contains('open')) renderModalStaffList();
-  });
-  db.collection("orders").onSnapshot(snap => {
-    if (!snap.empty) { orders = snap.docs.map(d => ({ id: d.id, ...d.data() })); saveOrdersLocal(); updateUI(); }
-  });
+function staffList() {
+  const map = new Map();
+  if (isAdmin()) users.forEach(u => map.set(u.uid, { id: u.uid, name: u.name }));
+  else if (me) map.set(me.uid, { id: me.uid, name: me.name });
+  orders.forEach(o => { const k = ownerKey(o); if (!map.has(k)) map.set(k, { id: k, name: o.staffName || o.creatorName || 'Unknown' }); });
+  return [...map.values()];
+}
+function fillStaffSelect(sel) {
+  const cur = sel.value, list = staffList();
+  sel.innerHTML = '<option value="ALL">All Staff</option>' + list.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  sel.value = list.some(s => s.id === cur) ? cur : 'ALL';
 }
 
-// ---------- Home filter ----------
+// ================= Home =================
 function setHomeRange(r) {
   homeRange = r; setChips('home-chips', r);
   $('home-custom').classList.toggle('hidden', r !== 'CUSTOM');
-  updateUI();
+  renderOrders();
 }
-function getFilteredOrders() { return orders.filter(o => inRange(o, homeRange, $('home-start').value, $('home-end').value)); }
-
-// ---------- Earnings screen ----------
-function openEarnings() {
-  fillStaffSelect($('earn-staff'), 'All Staff');
-  const s = $('screen-earnings');
-  s.classList.add('open'); s.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
-  history.pushState({ earnings: true }, '');
-  renderEarnings();
-}
-function closeEarnings(fromPop) {
-  const s = $('screen-earnings');
-  if (!s.classList.contains('open')) return;
-  s.classList.remove('open'); s.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = '';
-  if (!fromPop && history.state && history.state.earnings) history.back();
-}
-window.addEventListener('popstate', () => closeEarnings(true));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEarnings(); });
-
-function setEarnRange(r) {
-  earnRange = r; setChips('earn-chips', r);
-  $('earn-custom').classList.toggle('hidden', r !== 'CUSTOM');
-  renderEarnings();
-}
-function fillStaffSelect(sel, allLabel) {
-  const cur = sel.value;
-  sel.innerHTML = `<option value="ALL">${allLabel}</option>` + staffMembers.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-  sel.value = staffMembers.some(s => s.id === cur) ? cur : 'ALL';
-}
-function renderEarnings() {
-  if (!$('screen-earnings').classList.contains('open')) return;
-  const staffId = $('earn-staff').value;
-  const ranged = orders.filter(o => inRange(o, earnRange, $('earn-start').value, $('earn-end').value));
-  const list = ranged.filter(o => staffId === 'ALL' || o.staffId === staffId)
-                     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-  $('earn-orders').textContent = list.length;
-  $('earn-sales').textContent = omr(list.reduce((s, o) => s + (o.amount || 0), 0));
-  $('earn-total').textContent = omr(list.reduce((s, o) => s + (o.commission || 0), 0));
-
-  // per-staff chips (only when All Staff)
-  const sumWrap = $('earn-staff-summary');
-  if (staffId === 'ALL' && staffMembers.length > 0) {
-    sumWrap.classList.remove('hidden');
-    $('earn-staff-list').innerHTML = staffMembers.map(s => {
-      const so = ranged.filter(o => o.staffId === s.id);
-      return `<button onclick="pickEarnStaff('${esc(s.id)}')" class="card p-3 min-w-[150px] text-left shrink-0 hover:border-amber-400/60 transition">
-        <div class="flex items-center gap-2 mb-2"><span class="w-7 h-7 rounded-lg bg-amber-400/10 text-amber-400 text-xs font-extrabold flex items-center justify-center">${esc(s.name.charAt(0).toUpperCase())}</span><span class="font-bold text-xs truncate">${esc(s.name)}</span></div>
-        <p class="text-[11px] text-slate-400">${so.length} orders</p>
-        <p class="text-sm font-extrabold text-amber-400">${omr(so.reduce((a, o) => a + (o.commission || 0), 0))} OMR</p></button>`;
-    }).join('');
-  } else sumWrap.classList.add('hidden');
-
-  const st = staffMembers.find(s => s.id === staffId);
-  $('earn-list-title').textContent = `Orders${st ? ' · ' + st.name : ''} (${list.length})`;
-
-  if (!list.length) {
-    $('earn-list').innerHTML = `<div class="card p-8 text-center text-slate-500 text-sm"><i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>Is period mein koi order nahi mila</div>`;
-    return;
-  }
-  $('earn-list').innerHTML = list.map(o => {
-    const picked = o.status === 'Picked Up';
-    const earned = (o.commission || 0) > 0;
-    return `<div class="card p-3.5">
-      <div class="flex justify-between gap-3">
-        <div class="min-w-0">
-          <p class="font-bold text-sm truncate">${esc(o.customerName)}</p>
-          <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-regular fa-calendar"></i> ${fmtDate(o.createdAt || Date.now())}${staffId === 'ALL' ? ' · <i class="fa-solid fa-user-tie"></i> ' + esc(o.staffName) : ''}</p>
-          ${o.notes ? `<p class="text-[11px] text-slate-500 mt-1 truncate"><i class="fa-solid fa-note-sticky"></i> ${esc(o.notes)}</p>` : ''}
-        </div>
-        <div class="text-right shrink-0">
-          <p class="text-sm font-extrabold text-emerald-400">${omr(o.amount)} <span class="text-[10px] font-semibold text-slate-500">OMR</span></p>
-          <p class="text-xs font-extrabold mt-0.5 ${earned ? 'text-amber-400' : 'text-slate-500'}">+${omr(o.commission)} earned</p>
-        </div>
-      </div>
-      <div class="mt-2.5 pt-2.5 border-t border-[#223052] flex items-center justify-between text-[11px]">
-        <span class="text-slate-400"><i class="fa-solid fa-phone"></i> ${esc(o.customerPhone)}</span>
-        <span class="px-2 py-0.5 rounded-md font-bold ${picked ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-400/15 text-amber-400'}">${picked ? 'Picked Up' : 'Pending'}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-function pickEarnStaff(id) { $('earn-staff').value = id; renderEarnings(); $('screen-earnings').querySelector('.overflow-y-auto').scrollTop = 0; }
-
-// ---------- Modals ----------
-function openStaffModal() { renderModalStaffList(); $('modal-staff').classList.add('open'); }
-function closeStaffModal() { $('modal-staff').classList.remove('open'); $('input-staff-name').value = ''; }
-function openOrderModal(editId = null) {
-  populateStaffSelect();
-  const title = $('order-modal-title'), btn = $('order-submit-btn');
-  if (editId) {
-    const o = orders.find(x => x.id === editId);
-    if (o) {
-      $('edit-order-id').value = o.id;
-      title.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Order';
-      btn.textContent = 'Update Order';
-      $('order-staff-id').value = o.staffId;
-      $('order-customer-name').value = o.customerName;
-      $('order-customer-phone').value = o.customerPhone;
-      $('order-amount').value = o.amount;
-      $('order-pickup-time').value = o.pickupTime || '';
-      $('order-notes').value = o.notes || '';
-    }
-  } else {
-    $('edit-order-id').value = '';
-    title.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order';
-    btn.textContent = 'Save Order';
-    $('form-add-order').reset();
-  }
-  previewCommission();
-  $('modal-order').classList.add('open');
-}
-function closeOrderModal() { $('modal-order').classList.remove('open'); $('edit-order-id').value = ''; $('form-add-order').reset(); }
-function showConfirmModal(t, m, fn) { $('confirm-title').textContent = t; $('confirm-message').textContent = m; confirmActionHandler = fn; $('modal-confirm').classList.add('open'); }
-function closeConfirmModal() { $('modal-confirm').classList.remove('open'); confirmActionHandler = null; }
-$('confirm-btn-action').addEventListener('click', () => { if (confirmActionHandler) confirmActionHandler(); closeConfirmModal(); });
-
-function previewCommission() {
-  const c = calculateCommission($('order-amount').value);
-  $('commission-preview').textContent = `${omr(c)} OMR (${Math.round(c * 1000)} Baisa)`;
-}
-function populateStaffSelect() {
-  const sel = $('order-staff-id');
-  sel.innerHTML = staffMembers.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-  fillStaffSelect($('filter-staff'), 'All Staff');
-}
-
-// ---------- Staff handlers ----------
-async function handleAddStaff(e) {
-  e.preventDefault();
-  const name = $('input-staff-name').value.trim();
-  if (!name) return;
-  const s = { id: 'stf_' + Date.now(), name, createdAt: Date.now() };
-  staffMembers.push(s); saveStaffLocal(); renderModalStaffList(); updateUI();
-  $('input-staff-name').value = '';
-  if (db) db.collection("staff").doc(s.id).set(s).catch(err => console.error(err));
-}
-function requestDeleteStaff(id) { showConfirmModal("Delete Staff?", "Is staff member ko remove karna hai?", () => executeDeleteStaff(id)); }
-async function executeDeleteStaff(id) {
-  staffMembers = staffMembers.filter(s => s.id !== id);
-  saveStaffLocal(); renderModalStaffList(); updateUI();
-  if (db) db.collection("staff").doc(id).delete().catch(err => console.error(err));
-}
-function renderModalStaffList() {
-  $('modal-staff-count').textContent = staffMembers.length;
-  const list = $('modal-staff-list');
-  if (!staffMembers.length) { list.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Koi staff nahi hai.</p>'; return; }
-  list.innerHTML = staffMembers.map(s => {
-    const so = orders.filter(o => o.staffId === s.id);
-    const tot = so.reduce((a, o) => a + (o.amount || 0), 0);
-    return `<div class="flex items-center justify-between bg-[#16213a] border border-[#223052] rounded-xl px-3 py-2.5">
-      <div class="flex items-center gap-3 min-w-0">
-        <span class="w-9 h-9 rounded-lg bg-amber-400/10 text-amber-400 font-extrabold flex items-center justify-center shrink-0">${esc(s.name.charAt(0).toUpperCase())}</span>
-        <div class="min-w-0"><p class="font-bold text-sm truncate">${esc(s.name)}</p><p class="text-[11px] text-slate-400">${so.length} orders · ${omr(tot)} OMR</p></div>
-      </div>
-      <button onclick="requestDeleteStaff('${esc(s.id)}')" class="w-9 h-9 rounded-lg text-rose-400 hover:bg-rose-500/10"><i class="fa-solid fa-trash-can"></i></button>
-    </div>`;
-  }).join('');
-}
-
-// ---------- Order handlers ----------
-async function handleSaveOrder(e) {
-  e.preventDefault();
-  const editId = $('edit-order-id').value;
-  const staffId = $('order-staff-id').value;
-  const amount = parseFloat($('order-amount').value) || 0;
-  const staff = staffMembers.find(s => s.id === staffId);
-  const data = {
-    staffId, staffName: staff ? staff.name : 'Unknown',
-    customerName: $('order-customer-name').value.trim(),
-    customerPhone: $('order-customer-phone').value.trim(),
-    amount, commission: calculateCommission(amount),
-    pickupTime: $('order-pickup-time').value,
-    notes: $('order-notes').value.trim()
-  };
-  closeOrderModal();
-  if (editId) {
-    const o = orders.find(x => x.id === editId);
-    if (o) {
-      Object.assign(o, data); saveOrdersLocal(); updateUI();
-      if (db) db.collection("orders").doc(editId).update(o).catch(err => console.error(err));
-    }
-  } else {
-    const n = { id: 'ord_' + Date.now(), ...data, status: 'Pending', createdAt: Date.now() };
-    orders.unshift(n); saveOrdersLocal(); updateUI();
-    if (db) db.collection("orders").doc(n.id).set(n).catch(err => console.error(err));
-  }
-}
-async function toggleOrderStatus(id) {
-  const o = orders.find(x => x.id === id); if (!o) return;
-  o.status = o.status === 'Pending' ? 'Picked Up' : 'Pending';
-  saveOrdersLocal(); updateUI();
-  if (db) db.collection("orders").doc(id).update({ status: o.status }).catch(err => console.error(err));
-}
-function requestDeleteOrder(id) { showConfirmModal("Delete Order?", "Is order ko delete karna hai?", () => executeDeleteOrder(id)); }
-async function executeDeleteOrder(id) {
-  orders = orders.filter(o => o.id !== id); saveOrdersLocal(); updateUI();
-  if (db) db.collection("orders").doc(id).delete().catch(err => console.error(err));
-}
-
-// ---------- Render ----------
 function updateUI() {
-  populateStaffSelect();
-  const f = getFilteredOrders();
-  renderMetrics(f); renderOrders(f); renderCharts(f); renderEarnings();
+  if (!me) return;
+  fillStaffSelect($('filter-staff'));
+  fillStaffSelect($('earn-staff'));
+  renderToday(); renderOrders(); renderEarnings(); renderMonths();
 }
-function renderMetrics(f) {
-  $('stat-total-revenue').textContent = omr(f.reduce((s, o) => s + (o.amount || 0), 0));
-  $('stat-total-commission').textContent = omr(f.reduce((s, o) => s + (o.commission || 0), 0));
-  $('stat-total-orders').textContent = f.length;
-  $('stat-pending-orders').textContent = `${f.filter(o => o.status === 'Pending').length} pending`;
-  $('stat-active-staff').textContent = staffMembers.length;
+function renderToday() {
+  const t = orders.filter(o => inRange(o, 'TODAY'));
+  $('today-orders').textContent = t.length;
+  $('today-sales').textContent = omr(t.reduce((s, o) => s + (Number(o.amount) || 0), 0));
+  $('today-earned').textContent = omr(t.reduce((s, o) => s + reward(o), 0));
 }
-function renderOrders(filtered = getFilteredOrders()) {
+function renderOrders() {
   const box = $('orders-grid-container');
-  const sid = $('filter-staff').value, st = $('filter-status').value;
-  const list = filtered.filter(o => (sid === 'ALL' || o.staffId === sid) && (st === 'ALL' || o.status === st));
+  const sid = isAdmin() ? $('filter-staff').value : 'ALL', st = $('filter-status').value;
+  const list = orders
+    .filter(o => inRange(o, homeRange, $('home-start').value, $('home-end').value))
+    .filter(o => (sid === 'ALL' || ownerKey(o) === sid) && (st === 'ALL' || o.status === st))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   $('orders-count').textContent = `(${list.length})`;
   if (!list.length) { box.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500 text-sm">Koi order nahi mila.</div>'; return; }
   box.innerHTML = list.map(o => {
-    const picked = o.status === 'Picked Up';
-    const pickup = o.pickupTime ? new Date(o.pickupTime).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-    const reward = (o.commission || 0) >= 0.9;
+    const picked = o.status === 'Picked Up', r = reward(o), edit = canEdit(o);
     return `<div class="bg-[#16213a] border border-[#223052] rounded-2xl p-3.5 flex flex-col gap-3">
       <div class="flex justify-between items-start gap-2">
         <div class="min-w-0">
           <p class="font-bold text-sm truncate">${esc(o.customerName)}</p>
-          <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-solid fa-user-tie text-amber-400"></i> ${esc(o.staffName)}</p>
+          <p class="text-[11px] text-slate-400 mt-0.5"><i class="fa-solid fa-user-tie text-amber-400"></i> ${esc(o.staffName || o.creatorName)}</p>
         </div>
         <div class="flex items-center shrink-0">
-          <p class="font-extrabold text-emerald-400 text-sm mr-1.5">${omr(o.amount)} <span class="text-[10px] text-slate-500">OMR</span></p>
-          <button onclick="openOrderModal('${esc(o.id)}')" class="w-8 h-8 rounded-lg text-amber-400 hover:bg-[#223052]"><i class="fa-solid fa-pen-to-square"></i></button>
-          <button onclick="requestDeleteOrder('${esc(o.id)}')" class="w-8 h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-[#223052]"><i class="fa-solid fa-trash-can"></i></button>
+          <p class="font-extrabold text-emerald-400 text-sm mr-1">${omr(o.amount)} <span class="text-[10px] text-slate-500">OMR</span></p>
+          ${edit ? `<button onclick="openOrderModal('${esc(o.id)}')" class="w-8 h-8 rounded-lg text-amber-400 hover:bg-[#223052]"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button onclick="requestDeleteOrder('${esc(o.id)}')" class="w-8 h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-[#223052]"><i class="fa-solid fa-trash-can"></i></button>` : ''}
         </div>
       </div>
       <div class="flex justify-between text-[11px] text-slate-400">
         <span><i class="fa-solid fa-phone"></i> ${esc(o.customerPhone)}</span>
-        <span><i class="fa-regular fa-clock"></i> ${pickup}</span>
+        <span><i class="fa-regular fa-clock"></i> ${fmtPickup(o.pickupTime)}</span>
       </div>
       ${o.notes ? `<p class="text-[11px] text-slate-400 bg-[#0e1628] rounded-lg px-2.5 py-1.5"><i class="fa-solid fa-note-sticky text-amber-400"></i> ${esc(o.notes)}</p>` : ''}
       <div class="flex justify-between items-center pt-2.5 border-t border-[#223052]">
-        <span class="text-[11px] font-bold ${reward ? 'text-emerald-400' : 'text-slate-500'}"><i class="fa-solid ${reward ? 'fa-gift' : 'fa-circle-minus'}"></i> ${reward ? '900' : '0'} Baisa</span>
-        <button onclick="toggleOrderStatus('${esc(o.id)}')" class="px-3 py-1.5 rounded-lg text-xs font-bold ${picked ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40' : 'bg-amber-400/15 text-amber-400 border border-amber-400/40'}">
+        <span class="rew ${r ? 'on' : ''}"><i class="fa-solid fa-gift"></i> Reward ${omr(r)} OMR</span>
+        <button ${edit ? `onclick="toggleOrderStatus('${esc(o.id)}')"` : 'disabled'} class="px-3 py-1.5 rounded-lg text-xs font-bold ${picked ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40' : 'bg-amber-400/15 text-amber-400 border border-amber-400/40'}">
           <i class="fa-solid ${picked ? 'fa-circle-check' : 'fa-clock'}"></i> ${picked ? 'Picked Up' : 'Pending'}
         </button>
       </div>
     </div>`;
   }).join('');
 }
-function renderCharts(f) {
-  Chart.defaults.color = '#8b9ab8';
-  const names = staffMembers.map(s => s.name);
-  const vals = staffMembers.map(s => f.filter(o => o.staffId === s.id).reduce((a, o) => a + (o.commission || 0), 0));
-  if (staffChartInstance) staffChartInstance.destroy();
-  staffChartInstance = new Chart($('staffChart').getContext('2d'), {
-    type: 'bar',
-    data: { labels: names, datasets: [{ label: 'Reward (OMR)', data: vals, backgroundColor: 'rgba(245,165,36,.8)', borderRadius: 8, maxBarThickness: 46 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' } } } }
-  });
-  if (orderChartInstance) orderChartInstance.destroy();
-  orderChartInstance = new Chart($('orderTypeChart').getContext('2d'), {
-    type: 'doughnut',
-    data: { labels: ['Pending', 'Picked Up'], datasets: [{ data: [f.filter(o => o.status === 'Pending').length, f.filter(o => o.status === 'Picked Up').length], backgroundColor: ['#f5a524', '#10b981'], borderColor: '#111a2e', borderWidth: 3 }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } } }
+
+// ================= Orders =================
+function openOrderModal(editId = null) {
+  const title = $('order-modal-title'), btn = $('order-submit-btn');
+  if (editId) {
+    const o = orders.find(x => x.id === editId);
+    if (!o || !canEdit(o)) return toast('Aap yeh order edit nahi kar sakte', 'err');
+    $('edit-order-id').value = o.id;
+    title.innerHTML = '<i class="fa-solid fa-pen-to-square text-amber-400"></i> Edit Order';
+    btn.textContent = 'Update Order';
+    $('order-customer-name').value = o.customerName;
+    $('order-customer-phone').value = o.customerPhone;
+    $('order-amount').value = o.amount;
+    $('order-pickup-time').value = o.pickupTime || '';
+    $('order-notes').value = o.notes || '';
+  } else {
+    $('form-add-order').reset();
+    $('edit-order-id').value = '';
+    title.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order';
+    btn.textContent = 'Save Order';
+  }
+  previewReward();
+  openLayer('modal-order');
+}
+function closeOrderModal() { closeLayer(); }
+function previewReward() { $('reward-preview').textContent = omr(reward({ amount: $('order-amount').value })) + ' OMR'; }
+
+async function handleSaveOrder(e) {
+  e.preventDefault();
+  const editId = $('edit-order-id').value;
+  const amount = parseFloat($('order-amount').value) || 0;
+  const data = {
+    customerName: $('order-customer-name').value.trim(),
+    customerPhone: $('order-customer-phone').value.trim(),
+    amount, commission: reward({ amount }),
+    pickupTime: $('order-pickup-time').value,
+    notes: $('order-notes').value.trim()
+  };
+  closeLayer();
+  try {
+    if (editId) {
+      await db.collection('orders').doc(editId).update(data);
+    } else {
+      const id = 'ord_' + Date.now();
+      await db.collection('orders').doc(id).set({
+        ...data, id, status: 'Pending', createdAt: Date.now(),
+        creatorUid: me.uid, creatorName: me.name, staffId: me.uid, staffName: me.name
+      });
+    }
+  } catch (err) { console.error(err); toast('Save nahi hua: ' + authError(err), 'err'); }
+}
+async function toggleOrderStatus(id) {
+  const o = orders.find(x => x.id === id); if (!o || !canEdit(o)) return;
+  const status = o.status === 'Pending' ? 'Picked Up' : 'Pending';
+  try { await db.collection('orders').doc(id).update({ status }); }
+  catch (err) { toast(authError(err), 'err'); }
+}
+function showConfirm(title, msg, fn) {
+  $('confirm-title').textContent = title; $('confirm-message').textContent = msg;
+  confirmActionHandler = fn; openLayer('modal-confirm');
+}
+$('confirm-btn-action').addEventListener('click', () => { const fn = confirmActionHandler; confirmActionHandler = null; closeLayer(); if (fn) fn(); });
+function requestDeleteOrder(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o || !canEdit(o)) return toast('Aap yeh order delete nahi kar sakte', 'err');
+  showConfirm('Delete Order?', 'Is order ko delete karna hai?', async () => {
+    try { await db.collection('orders').doc(id).delete(); } catch (err) { toast(authError(err), 'err'); }
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => { setupRealtimeListeners(); updateUI(); });
+// ================= Staff Earnings (full screen) =================
+function openEarningsHome() {
+  earnRange = 'MONTH'; setChips('earn-chips', 'MONTH');
+  $('earn-custom').classList.add('hidden');
+  $('earn-staff').value = 'ALL';
+  openLayer('screen-earnings'); renderEarnings();
+  $('earn-scroll').scrollTop = 0;
+}
+function setEarnRange(r) {
+  earnRange = r; setChips('earn-chips', r);
+  $('earn-custom').classList.toggle('hidden', r !== 'CUSTOM');
+  renderEarnings();
+}
+function pickEarnStaff(id) { $('earn-staff').value = id; renderEarnings(); $('earn-scroll').scrollTop = 0; }
+
+function orderBox(o, showStaff) {
+  const r = reward(o), picked = o.status === 'Picked Up';
+  return `<div class="box">
+    <div class="flex justify-between items-start gap-1.5">
+      <p class="font-bold text-[13px] truncate">${esc(o.customerName)}</p>
+      <p class="font-extrabold text-emerald-400 text-[13px] shrink-0">${omr(o.amount)}</p>
+    </div>
+    <p class="meta"><i class="fa-regular fa-clock"></i> ${fmtTime(o.createdAt || Date.now())}</p>
+    <p class="meta"><i class="fa-solid fa-phone"></i> ${esc(o.customerPhone)}</p>
+    <p class="meta"><i class="fa-solid fa-box"></i> Pickup ${fmtPickup(o.pickupTime)}</p>
+    ${o.notes ? `<p class="meta"><i class="fa-solid fa-note-sticky"></i> ${esc(o.notes)}</p>` : ''}
+    ${showStaff ? `<p class="meta"><i class="fa-solid fa-user-tie"></i> ${esc(o.staffName || o.creatorName)}</p>` : ''}
+    <div class="flex justify-between items-center mt-2 pt-2 border-t border-[#223052]">
+      <span class="rew ${r ? 'on' : ''}">+${omr(r)}</span>
+      <span class="st ${picked ? 'd' : 'p'}">${picked ? 'Picked Up' : 'Pending'}</span>
+    </div>
+  </div>`;
+}
+
+function renderEarnings() {
+  if (!$('screen-earnings').classList.contains('open')) return;
+  const sid = isAdmin() ? $('earn-staff').value : 'ALL';
+  const ranged = orders.filter(o => inRange(o, earnRange, $('earn-start').value, $('earn-end').value));
+  const list = ranged.filter(o => sid === 'ALL' || ownerKey(o) === sid).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  // per-staff cards (admin, all staff)
+  const wrap = $('earn-staff-summary');
+  if (isAdmin() && sid === 'ALL') {
+    wrap.classList.remove('hidden');
+    $('earn-staff-list').innerHTML = staffList().map(s => {
+      const so = ranged.filter(o => ownerKey(o) === s.id);
+      return `<button onclick="pickEarnStaff('${esc(s.id)}')" class="card p-3 min-w-[155px] text-left shrink-0 hover:border-amber-400/60 transition">
+        <div class="flex items-center gap-2 mb-2"><span class="w-7 h-7 rounded-lg bg-amber-400/10 text-amber-400 text-xs font-extrabold flex items-center justify-center">${esc((s.name || '?').charAt(0).toUpperCase())}</span><span class="font-bold text-xs truncate">${esc(s.name)}</span></div>
+        <p class="text-[11px] text-slate-400">${so.length} orders</p>
+        <p class="text-sm font-extrabold text-amber-400">${omr(so.reduce((a, o) => a + reward(o), 0))} OMR</p></button>`;
+    }).join('');
+  } else wrap.classList.add('hidden');
+
+  const sel = staffList().find(s => s.id === sid);
+  const sales = list.reduce((a, o) => a + (Number(o.amount) || 0), 0), earned = list.reduce((a, o) => a + reward(o), 0);
+  $('earn-line').innerHTML = `${sel ? esc(sel.name) + ' · ' : ''}<span class="text-slate-100">${list.length} orders</span> · Sales <span class="text-emerald-400">${omr(sales)}</span> · Earned <span class="text-amber-400">${omr(earned)} OMR</span>`;
+
+  if (!list.length) {
+    $('earn-days').innerHTML = `<div class="card p-8 text-center text-slate-500 text-sm"><i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>Is period mein koi order nahi mila</div>`;
+    return;
+  }
+  const days = new Map();
+  list.forEach(o => { const k = ymd(new Date(o.createdAt || Date.now())); if (!days.has(k)) days.set(k, []); days.get(k).push(o); });
+  $('earn-days').innerHTML = [...days.entries()].map(([k, arr]) => {
+    const de = arr.reduce((a, o) => a + reward(o), 0);
+    return `<section>
+      <div class="flex items-center justify-between mb-2.5 px-0.5">
+        <p class="font-extrabold text-sm"><i class="fa-regular fa-calendar text-amber-400"></i> ${fmtDay(arr[0].createdAt || Date.now())}</p>
+        <p class="text-[11px] font-bold text-slate-400">${arr.length} orders · <span class="text-amber-400">+${omr(de)} OMR</span></p>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5">${arr.map(o => orderBox(o, sid === 'ALL' && isAdmin())).join('')}</div>
+    </section>`;
+  }).join('');
+}
+
+// ================= Monthly summary =================
+function openMonths() { renderMonths(true); openLayer('screen-months'); }
+function renderMonths(force) {
+  if (!force && !$('screen-months').classList.contains('open')) return;
+  const groups = new Map();
+  const now = new Date(), curKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+  groups.set(curKey, []);
+  [...orders].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).forEach(o => {
+    const d = new Date(o.createdAt || Date.now()), k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(o);
+  });
+  const keys = [...groups.keys()].sort().reverse();
+  $('months-list').innerHTML = keys.map(k => {
+    const arr = groups.get(k), [y, m] = k.split('-').map(Number);
+    const label = new Date(y, m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    const sales = arr.reduce((a, o) => a + (Number(o.amount) || 0), 0), earned = arr.reduce((a, o) => a + reward(o), 0);
+    let staffRows = '';
+    if (isAdmin() && arr.length) {
+      staffRows = `<div class="mt-3 pt-3 border-t border-[#223052] space-y-1.5">` + staffList().map(s => {
+        const so = arr.filter(o => ownerKey(o) === s.id);
+        if (!so.length) return '';
+        return `<div class="flex justify-between text-xs"><span class="text-slate-300 font-semibold">${esc(s.name)} <span class="text-slate-500">· ${so.length} orders</span></span><span class="font-extrabold text-amber-400">${omr(so.reduce((a, o) => a + reward(o), 0))}</span></div>`;
+      }).join('') + `</div>`;
+    }
+    return `<button onclick="openMonth('${k}')" class="card p-4 w-full text-left hover:border-sky-400/60 transition ${k === curKey ? 'border-amber-400/50' : ''}">
+      <div class="flex items-center justify-between mb-3">
+        <p class="font-extrabold">${label}</p>
+        ${k === curKey ? '<span class="st p">This month</span>' : '<i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>'}
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <div><p class="text-[10px] text-slate-400 font-semibold uppercase">Orders</p><p class="font-extrabold text-lg">${arr.length}</p></div>
+        <div><p class="text-[10px] text-slate-400 font-semibold uppercase">Sales</p><p class="font-extrabold text-lg text-emerald-400">${omr(sales)}</p></div>
+        <div><p class="text-[10px] text-slate-400 font-semibold uppercase">Total earned</p><p class="font-extrabold text-lg text-amber-400">${omr(earned)}</p></div>
+      </div>${staffRows}
+    </button>`;
+  }).join('');
+}
+function openMonth(k) {
+  const [y, m] = k.split('-').map(Number);
+  $('earn-start').value = ymd(new Date(y, m - 1, 1));
+  $('earn-end').value = ymd(new Date(y, m, 0));
+  $('earn-staff').value = 'ALL';
+  earnRange = 'CUSTOM'; setChips('earn-chips', 'CUSTOM');
+  $('earn-custom').classList.remove('hidden');
+  openLayer('screen-earnings'); renderEarnings();
+  $('earn-scroll').scrollTop = 0;
+}
+
+// ================= PWA =================
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+setAuthMode('login');
+setTimeout(() => $('splash').classList.add('out'), 12000);
 </script>
 </body>
 </html>
