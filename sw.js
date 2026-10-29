@@ -1,4 +1,4 @@
-const CACHE = 'ash-rewards-v19';
+const CACHE = 'ash-rewards-v20';
 const CORE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './favicon.png'];
 const HOSTS = ['cdn.tailwindcss.com', 'cdnjs.cloudflare.com', 'www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 

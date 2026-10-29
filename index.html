@@ -403,6 +403,7 @@ async function hashPw(pass, salt) {
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(salt), iterations: 60000 }, key, 256);
   return b2h(bits);
 }
+const tmo = (p, ms = 10000) => Promise.race([p, new Promise((_, rj) => setTimeout(() => rj({ message: 'Server se connect nahi hua - internet check karein ya Firebase me Firestore Database create karein' }), ms))]);
 const newSalt = () => b2h(crypto.getRandomValues(new Uint8Array(16)));
 const getSes = () => { try { return JSON.parse(localStorage.getItem(SES_KEY)); } catch (_) { return null; } };
 const setSes = (u, h, p) => { try { localStorage.setItem(SES_KEY, JSON.stringify({ u, h, p })); } catch (_) {} };
@@ -499,8 +500,8 @@ function setAuthMode(m) {
   $('auth-err').classList.add('hidden');
 }
 async function checkSetup() {
-  let show = true;
-  try { show = !(await db.collection('meta').doc('admin').get()).exists; } catch (_) { show = true; }
+  let show = false;
+  try { show = !(await tmo(db.collection('meta').doc('admin').get(), 8000)).exists; } catch (_) { show = false; }
   $('auth-setup').classList.toggle('hidden', !show);
   if (!show && authMode !== 'login') setAuthMode('login');
 }
@@ -515,10 +516,10 @@ async function handleAuth(e) {
   const pass = $('auth-pass').value;
   if (!validUser(uname)) return authMsg('Username 3+ characters: letters, numbers, . _ -');
   if (pass.length < MIN_PASS) return authMsg('Password kam se kam 4 characters ka rakhein');
-  const btn = $('auth-btn'); btn.disabled = true;
+  const btn = $('auth-btn'), btnTxt = btn.textContent; btn.disabled = true; btn.textContent = '⏳ Please wait...';
   try {
     const ref = db.collection('users').doc(uname);
-    const snap = await ref.get();
+    const snap = await tmo(ref.get());
     if (authMode === 'login') {
       const d = snap.exists ? snap.data() : null;
       if (!d || !d.hash || d.hash !== await hashPw(pass, d.salt)) throw { message: 'Username ya password galat hai' };
@@ -526,7 +527,7 @@ async function handleAuth(e) {
       await startSession({ uid: uname, ...d });
     } else {
       // First time setup: pehla manager seedha app se Firebase me register
-      const adm = await db.collection('meta').doc('admin').get();
+      const adm = await tmo(db.collection('meta').doc('admin').get());
       if (adm.exists) throw { message: 'Manager pehle se bana hua hai - Login karein' };
       if (snap.exists) throw { message: 'Yeh username pehle se hai' };
       const salt = newSalt(), hash = await hashPw(pass, salt);
@@ -534,7 +535,7 @@ async function handleAuth(e) {
       const b = db.batch();
       b.set(ref, prof);
       b.set(db.collection('meta').doc('admin'), { uid: uname, createdAt: Date.now() });
-      await b.commit();
+      await tmo(b.commit());
       setSes(uname, hash, prof);
       await startSession({ uid: uname, ...prof });
     }
@@ -542,7 +543,7 @@ async function handleAuth(e) {
   } catch (err) {
     console.error(err);
     authMsg(authError(err));
-  } finally { btn.disabled = false; }
+  } finally { btn.disabled = false; btn.textContent = btnTxt; }
 }
 
 // ================= Session =================
@@ -745,9 +746,9 @@ async function saveStep(e) {
 async function adminAddAccount(uname, pass, role) {
   if (!isAdmin()) throw { message: 'Sirf manager add kar sakta hai' };
   const ref = db.collection('users').doc(uname);
-  if ((await ref.get()).exists) throw { message: 'Yeh username pehle se hai' };
+  if ((await tmo(ref.get())).exists) throw { message: 'Yeh username pehle se hai' };
   const salt = newSalt(), hash = await hashPw(pass, salt);
-  await ref.set({ name: cap(uname), username: uname, role: role === 'manager' ? 'admin' : 'staff', salt, hash, createdAt: Date.now(), createdBy: me.uid });
+  await tmo(ref.set({ name: cap(uname), username: uname, role: role === 'manager' ? 'admin' : 'staff', salt, hash, createdAt: Date.now(), createdBy: me.uid }));
 }
 
 async function adminSetPassword(uid, pass) { await setPassword(uid, pass); }
