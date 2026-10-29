@@ -370,6 +370,15 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 </div>
 
 <script>
+// Failsafe: agar kisi wajah se app 8 sec me nahi khula to splash hata kar login dikhao
+setTimeout(function () {
+  var sp = document.getElementById('splash'), a = document.getElementById('auth'), p = document.getElementById('app');
+  if (sp && !sp.classList.contains('out') && a && p && a.classList.contains('hidden') && p.classList.contains('hidden')) {
+    a.classList.remove('hidden'); sp.classList.add('out');
+  }
+}, 8000);
+</script>
+<script>
 // ================= Firebase =================
 const firebaseConfig = {
             apiKey: "AIzaSyAQamkgnBESFuGEoHCoqtsn-hR-z1Gzh_s",
@@ -396,7 +405,7 @@ async function hashPw(pass, salt) {
 }
 const newSalt = () => b2h(crypto.getRandomValues(new Uint8Array(16)));
 const getSes = () => { try { return JSON.parse(localStorage.getItem(SES_KEY)); } catch (_) { return null; } };
-const setSes = (u, h) => { try { localStorage.setItem(SES_KEY, JSON.stringify({ u, h })); } catch (_) {} };
+const setSes = (u, h, p) => { try { localStorage.setItem(SES_KEY, JSON.stringify({ u, h, p })); } catch (_) {} };
 const clearSes = () => { try { localStorage.removeItem(SES_KEY); } catch (_) {} };
 const REWARD_MIN = 20, REWARD_AMT = 1;
 let me = null;               // {uid,name,username,role}
@@ -513,7 +522,7 @@ async function handleAuth(e) {
     if (authMode === 'login') {
       const d = snap.exists ? snap.data() : null;
       if (!d || !d.hash || d.hash !== await hashPw(pass, d.salt)) throw { message: 'Username ya password galat hai' };
-      setSes(uname, d.hash);
+      setSes(uname, d.hash, d);
       await startSession({ uid: uname, ...d });
     } else {
       // First time setup: pehla manager seedha app se Firebase me register
@@ -526,7 +535,7 @@ async function handleAuth(e) {
       b.set(ref, prof);
       b.set(db.collection('meta').doc('admin'), { uid: uname, createdAt: Date.now() });
       await b.commit();
-      setSes(uname, hash);
+      setSes(uname, hash, prof);
       await startSession({ uid: uname, ...prof });
     }
     $('auth-pass').value = '';
@@ -541,7 +550,9 @@ async function bootSession() {
   const ses = getSes();
   if (!ses || !ses.u) { endSession(); showAuth(); hideSplash(); return; }
   try {
-    const snap = await db.collection('users').doc(ses.u).get();
+    // Pehle saved profile se turant khol do (offline/slow me bhi atke nahi); verify background me hota hai
+    if (ses.p && ses.p.hash === ses.h) { await startSession({ uid: ses.u, ...ses.p }); return; }
+    const snap = await Promise.race([db.collection('users').doc(ses.u).get(), new Promise((_, rj) => setTimeout(() => rj({ message: 'Server se connect nahi hua' }), 7000))]);
     const d = snap.exists ? snap.data() : null;
     if (!d || d.hash !== ses.h) { clearSes(); endSession(); showAuth(); hideSplash(); return; }
     await startSession({ uid: ses.u, ...d });
@@ -566,6 +577,7 @@ async function startSession(profile) {
     }
     const prevRole = me.role;
     me = { uid: me.uid, ...s.data() };
+    setSes(me.uid, me.hash, s.data());
     renderHeader();
     if (prevRole !== me.role) subscribeData(); else updateUI();
   }, err => console.error(err));
@@ -641,7 +653,7 @@ async function setPassword(uid, pass) {
   if (self) selfChange = true;
   try {
     await db.collection('users').doc(uid).update({ salt, hash });
-    if (self) { me.salt = salt; me.hash = hash; setSes(uid, hash); }
+    if (self) { me.salt = salt; me.hash = hash; setSes(uid, hash, me); }
   } finally { if (self) setTimeout(() => { selfChange = false; }, 1000); }
 }
 
