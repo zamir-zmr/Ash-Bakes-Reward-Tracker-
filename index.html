@@ -14,7 +14,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 :root{--bg:#0b1220;--surface:#111a2e;--surface2:#16213a;--line:#223052;--muted:#8b9ab8;--accent:#f5a524;--blue:#25b0d6}
@@ -384,13 +384,47 @@ const firebaseConfig = {
             apiKey: "AIzaSyAQamkgnBESFuGEoHCoqtsn-hR-z1Gzh_s",
             authDomain: "ashbakesrewardtracker.firebaseapp.com",
             projectId: "ashbakesrewardtracker",
+            databaseURL: "https://ashbakesrewardtracker-default-rtdb.firebaseio.com",
             storageBucket: "ashbakesrewardtracker.firebasestorage.app",
             messagingSenderId: "62622240064",
             appId: "1:62622240064:web:cdceb080627e6d4ed7fea5"
         };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-db.settings({ experimentalForceLongPolling: true, useFetchStreams: false, merge: true });
+// ---- Realtime Database (Firestore jaisa chhota adapter) ----
+const rtdb = firebase.database();
+const snapDoc = (id, v) => ({ id, exists: v != null, data: () => (v == null ? undefined : v) });
+const db = {
+  collection(n) {
+    const ref = rtdb.ref(n);
+    const list = filter => (cb, errCb) => {
+      const h = ref.on('value', s => {
+        const docs = [];
+        s.forEach(c => { const v = c.val(); if (!filter || filter(v)) docs.push(snapDoc(c.key, v)); });
+        cb({ docs });
+      }, errCb);
+      return () => ref.off('value', h);
+    };
+    return {
+      doc: id => {
+        const r = ref.child(id);
+        return {
+          _p: n + '/' + id,
+          get: async () => snapDoc(id, (await r.once('value')).val()),
+          set: d => r.set(d),
+          update: async d => { if ((await r.once('value')).val() == null) throw { code: 'not-found' }; return r.update(d); },
+          delete: () => r.remove(),
+          onSnapshot: (cb, errCb) => { const h = r.on('value', s => cb(snapDoc(id, s.val())), errCb); return () => r.off('value', h); }
+        };
+      },
+      where: (f, op, v) => ({ onSnapshot: list(x => x && x[f] === v) }),
+      onSnapshot: list()
+    };
+  },
+  batch() {
+    const up = {};
+    return { set: (r, d) => { up[r._p] = d; }, delete: r => { up[r._p] = null; }, commit: () => rtdb.ref().update(up) };
+  }
+};
 
 // ================= Constants / State =================
 const MIN_PASS = 4;
@@ -403,7 +437,7 @@ async function hashPw(pass, salt) {
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(salt), iterations: 60000 }, key, 256);
   return b2h(bits);
 }
-const tmo = (p, ms = 10000) => Promise.race([p, new Promise((_, rj) => setTimeout(() => rj({ message: 'Server se connect nahi hua - internet check karein ya Firebase me Firestore Database create karein' }), ms))]);
+const tmo = (p, ms = 10000) => Promise.race([p, new Promise((_, rj) => setTimeout(() => rj({ message: 'Server se connect nahi hua - internet check karein ya Firebase Realtime Database check karein' }), ms))]);
 const newSalt = () => b2h(crypto.getRandomValues(new Uint8Array(16)));
 const getSes = () => { try { return JSON.parse(localStorage.getItem(SES_KEY)); } catch (_) { return null; } };
 const setSes = (u, h, p) => { try { localStorage.setItem(SES_KEY, JSON.stringify({ u, h, p })); } catch (_) {} };
@@ -449,15 +483,16 @@ function authError(e) {
     'auth/user-not-found': 'Yeh username nahi mila',
     'auth/email-already-in-use': 'Yeh username pehle se liya hua hai',
     'auth/weak-password': 'Password kam se kam 4 characters ka rakhein',
-    'unavailable': 'Firestore se connect nahi hua - internet check karein ya Firebase me Firestore Database create karein',
-    'not-found': 'Firebase me Firestore Database create nahi hai',
-    'failed-precondition': 'Firebase me Firestore Database create nahi hai',
+    'unavailable': 'Database se connect nahi hua - internet check karein ya Firebase Realtime Database check karein',
+    'not-found': 'Realtime Database nahi mila',
+    'failed-precondition': 'Realtime Database nahi mila',
     'auth/network-request-failed': 'Internet check karein',
     'auth/too-many-requests': 'Bahut koshish ho gayi, thodi der baad try karein',
     'auth/requires-recent-login': 'Dobara login karke try karein',
     'auth/operation-not-allowed': 'Firebase Console mein Email/Password sign-in enable karein',
     'auth/invalid-email': 'Username sahi nahi hai',
-    'permission-denied': 'Firestore rules block kar rahe hain - naye firestore.rules publish karein'
+    'permission-denied': 'Database rules block kar rahe hain - database.rules.json wale rules publish karein',
+    'PERMISSION_DENIED': 'Database rules block kar rahe hain - database.rules.json wale rules publish karein'
   };
   if (/offline/i.test((e && e.message) || '')) return map['unavailable'];
   return map[c] || (e && e.message) || 'Kuch galat hua';
@@ -514,7 +549,7 @@ async function handleAuth(e) {
   authMsg('');
   const uname = normUser($('auth-user').value);
   const pass = $('auth-pass').value;
-  if (!validUser(uname)) return authMsg('Username 3+ characters: letters, numbers, . _ -');
+  if (!validUser(uname)) return authMsg('Username 3+ characters: letters, numbers, _ -');
   if (pass.length < MIN_PASS) return authMsg('Password kam se kam 4 characters ka rakhein');
   const btn = $('auth-btn'), btnTxt = btn.textContent; btn.disabled = true; btn.textContent = '⏳ Please wait...';
   try {
@@ -684,7 +719,7 @@ async function installApp() {
 // ================= Security Password (Managers / Users) =================
 const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 const normUser = v => String(v || '').trim().toLowerCase().replace(/\s+/g, '');
-const validUser = u => /^[a-z0-9._-]{3,}$/.test(u);
+const validUser = u => /^[a-z0-9_-]{3,}$/.test(u);
 const managers = () => users.filter(u => u.role === 'admin');
 let stepMode = null, stepUid = null;
 
@@ -731,7 +766,7 @@ async function saveStep(e) {
   e.preventDefault(); stepMsg('');
   const pass = $('step-pass').value;
   const uname = normUser($('step-user').value);
-  if (stepMode !== 'pw' && !validUser(uname)) return stepMsg('Username 3+ characters: letters, numbers, . _ -');
+  if (stepMode !== 'pw' && !validUser(uname)) return stepMsg('Username 3+ characters: letters, numbers, _ -');
   if (pass.length < MIN_PASS) return stepMsg('Password kam se kam 4 characters ka rakhein');
   const btn = $('step-btn'); btn.disabled = true;
   try {
