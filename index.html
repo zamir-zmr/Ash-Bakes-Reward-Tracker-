@@ -47,6 +47,21 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 .st{font-size:10px;font-weight:800;padding:2px 8px;border-radius:8px}
 .st.p{background:rgba(245,165,36,.15);color:var(--accent)}.st.d{background:rgba(16,185,129,.15);color:#34d399}
 
+
+/* ---------- Light screens (Login / Security Password) ---------- */
+.lt-in{display:block;width:100%;background:#fff;border:2px solid #e2e8f0;border-radius:24px;padding:20px 24px;font-size:22px;color:#0f172a;outline:none;margin-bottom:14px;font-family:inherit}
+.lt-in:focus{border-color:#10b981}.lt-in::placeholder{color:#94a3b8}
+.lt-btn{display:block;width:100%;text-align:left;border:2px solid;border-radius:22px;padding:22px 24px;font-size:24px;font-weight:800;font-family:inherit;margin-top:6px}
+.lt-btn:disabled{opacity:.55}
+.lt-hdr{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px 14px;background:linear-gradient(90deg,#f59e0b,#e11d48);box-shadow:0 8px 20px rgba(15,23,42,.18);position:relative;z-index:2}
+.lt-hdr .ic{width:52px;height:52px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.lt-hdr b{flex:1;color:#fff;font-size:26px;font-weight:800;line-height:1.1}
+.lt-hdr button{width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.35);color:#fff;font-size:32px;line-height:1}
+.acc-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:2px solid;border-radius:22px;padding:16px 16px 16px 20px;margin-bottom:14px}
+.acc-card .rl{font-size:15px;font-weight:800;letter-spacing:.06em}
+.acc-card .nm{font-size:30px;font-weight:800;color:#0f172a;line-height:1.15;word-break:break-word}
+.acc-btn{width:54px;height:54px;border-radius:16px;border:2px solid;background:#fff;font-size:22px;flex-shrink:0}
+
 /* ---------- Splash (round animation) ---------- */
 #splash{position:fixed;inset:0;z-index:200;background:#0f121a;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s;overflow:hidden}
 #splash.out{opacity:0;visibility:hidden}
@@ -81,28 +96,20 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 
 <div id="toast"></div>
 
-<!-- ============ AUTH ============ -->
-<div id="auth" class="hidden fixed inset-0 z-[90] overflow-y-auto" style="background:radial-gradient(500px 380px at 10% 10%,rgba(37,176,214,.22),transparent 60%),radial-gradient(500px 380px at 95% 90%,rgba(246,224,94,.12),transparent 60%),#0b1220">
-  <div class="min-h-full flex items-center justify-center p-5">
-    <div class="w-full max-w-sm">
-      <div class="text-center mb-6">
-        <img src="icon-512.png" class="w-24 h-24 rounded-full mx-auto shadow-[0_0_40px_rgba(37,176,214,.4)]" alt="">
-        <h1 class="mt-4 text-2xl font-extrabold">Ash Bakes</h1>
-        <p class="text-xs text-slate-400 font-semibold tracking-widest uppercase mt-1">Reward Tracker</p>
-      </div>
-      <div class="card p-5">
-        <div class="grid grid-cols-2 gap-2 mb-4 p-1 rounded-xl bg-[#0e1628]">
-          <button id="tab-login" onclick="setAuthMode('login')" class="chip on">Login</button>
-          <button id="tab-register" onclick="setAuthMode('register')" class="chip">Create account</button>
-        </div>
-        <form onsubmit="handleAuth(event)" class="space-y-3" autocomplete="on">
-          <div id="auth-name-wrap" class="hidden"><p class="label mb-1">Full name</p><input id="auth-name" class="field" placeholder="e.g. Zamir Ansari" autocomplete="name"></div>
-          <div><p class="label mb-1">Username</p><input id="auth-user" class="field" placeholder="e.g. zamir" autocapitalize="none" autocomplete="username" required></div>
-          <div><p class="label mb-1">Password</p><input id="auth-pass" type="password" class="field" placeholder="min 4 characters" autocomplete="current-password" required></div>
-          <p id="auth-err" class="text-xs font-semibold text-rose-400 hidden"></p>
-          <button id="auth-btn" type="submit" class="btn btn-primary w-full">Login</button>
-        </form>
-      </div>
+<!-- ============ AUTH (Login) ============ -->
+<div id="auth" class="hidden fixed inset-0 z-[90] overflow-y-auto" style="background:#fff;color:#0f172a">
+  <div class="min-h-full flex items-center justify-center" style="padding:24px 24px calc(24px + env(safe-area-inset-bottom))">
+    <div class="w-full" style="max-width:480px">
+      <div style="text-align:center;font-size:56px;margin-bottom:6px">🔒</div>
+      <h3 id="auth-title" style="text-align:center;margin:0 0 6px;font-size:28px;font-weight:800;color:#0f172a">Login</h3>
+      <p id="auth-sub" style="text-align:center;color:#94a3b8;font-size:15px;margin:0 0 30px">Enter your username and password</p>
+      <form onsubmit="handleAuth(event)" autocomplete="on">
+        <input id="auth-user" class="lt-in" placeholder="Username" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required>
+        <input id="auth-pass" type="password" class="lt-in" placeholder="Password" autocomplete="current-password" required>
+        <p id="auth-err" class="hidden" style="color:#e11d48;font-size:13px;font-weight:700;margin:-4px 4px 12px"></p>
+        <button id="auth-btn" type="submit" class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857">🔓 Login</button>
+      </form>
+      <button id="auth-setup" type="button" onclick="setAuthMode(authMode==='login'?'register':'login')" class="hidden" style="display:block;margin:22px auto 0;background:none;border:none;color:#3b82f6;font-weight:700;font-size:13px">First time setup? Create manager</button>
     </div>
   </div>
 </div>
@@ -148,6 +155,12 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
       <p class="text-[11px] text-slate-400 mt-1">Month end total + purane months</p>
     </button>
   </section>
+
+  <!-- Manager only -->
+  <button id="home-security" onclick="openSecurity()" class="hidden card p-4 w-full text-left flex items-center gap-3 hover:border-rose-400/60 transition">
+    <span class="w-10 h-10 rounded-xl bg-rose-400/10 border border-rose-400/25 flex items-center justify-center text-lg">🔒</span>
+    <span><span class="block font-extrabold text-sm leading-tight">Security Password</span><span class="block text-[11px] text-slate-400 mt-1">Managers &amp; Users add / remove / password</span></span>
+  </button>
 
   <!-- Active orders -->
   <section class="card p-4">
@@ -252,6 +265,7 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
         <button id="pw-btn" class="btn btn-primary w-full" type="submit">Update password</button>
       </form>
 
+      <button id="acc-security" onclick="openSecurity()" class="btn btn-ghost w-full hidden">🔒 Security Password (Managers &amp; Users)</button>
       <button id="install-btn" onclick="installApp()" class="btn btn-ghost w-full hidden"><i class="fa-solid fa-download"></i> Install app</button>
       <button onclick="doLogout()" class="btn btn-ghost w-full"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
 
@@ -261,6 +275,41 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
         <button onclick="openLayer('modal-remove')" class="btn btn-danger w-full"><i class="fa-solid fa-user-xmark"></i> Remove account</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ============ LAYER: SECURITY PASSWORD (Managers / Users) ============ -->
+<div id="screen-security" class="layer" style="background:#fff;color:#0f172a">
+  <div class="lt-hdr"><span class="ic">🔒</span><b>Security Password</b><button onclick="closeLayer()" aria-label="Close">×</button></div>
+  <div class="flex-1 overflow-y-auto">
+    <div style="max-width:480px;margin:0 auto;padding:26px 24px 16px">
+      <div style="text-align:center;font-size:56px;margin-bottom:6px">🔒</div>
+      <h3 style="text-align:center;margin:0 0 6px;font-size:28px;font-weight:800;color:#0f172a">Security Password</h3>
+      <p id="sec-status" style="text-align:center;color:#94a3b8;font-size:15px;margin:0 0 22px"></p>
+      <button class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857;margin-bottom:12px;font-size:20px" onclick="startAdd('user')">➕ Add User</button>
+      <button class="lt-btn" style="background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;margin-bottom:22px;font-size:20px" onclick="startAdd('manager')">➕ Add Manager</button>
+      <div id="sec-list"></div>
+    </div>
+  </div>
+  <div style="flex-shrink:0;padding:10px 24px calc(18px + env(safe-area-inset-bottom));background:#fff">
+    <button onclick="closeLayer()" style="display:block;width:100%;max-width:480px;margin:0 auto;background:#f8fafc;border:2px solid #e2e8f0;border-radius:22px;padding:18px;font-size:22px;font-weight:800;color:#64748b">↩️ Close</button>
+  </div>
+</div>
+
+<!-- ============ LAYER: ADD ACCOUNT / CHANGE PASSWORD ============ -->
+<div id="screen-pwstep" class="layer" style="background:#fff;color:#0f172a;z-index:65">
+  <div class="lt-hdr"><span class="ic" id="step-hic">🔒</span><b id="step-htitle">Add User</b><button onclick="closeLayer()" aria-label="Close">×</button></div>
+  <div class="flex-1 overflow-y-auto">
+    <form onsubmit="saveStep(event)" style="max-width:480px;margin:0 auto;padding:30px 24px 24px">
+      <div id="step-ic" style="text-align:center;font-size:56px;margin-bottom:6px">👤</div>
+      <h3 id="step-title" style="text-align:center;margin:0 0 6px;font-size:28px;font-weight:800;color:#0f172a">Add User</h3>
+      <p id="step-sub" style="text-align:center;color:#94a3b8;font-size:15px;margin:0 0 26px">Enter username and password</p>
+      <input id="step-user" class="lt-in" placeholder="Username" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off">
+      <input id="step-pass" type="text" class="lt-in" placeholder="Password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+      <p id="step-err" class="hidden" style="color:#e11d48;font-size:13px;font-weight:700;margin:-4px 4px 12px"></p>
+      <button id="step-btn" type="submit" class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857;text-align:center">✅ Save</button>
+      <button type="button" onclick="closeLayer()" class="lt-btn" style="background:#f8fafc;border-color:#e2e8f0;color:#64748b;text-align:center;margin-top:12px;font-size:20px">↩️ Cancel</button>
+    </form>
   </div>
 </div>
 
@@ -387,6 +436,7 @@ function authError(e) {
     'auth/too-many-requests': 'Bahut koshish ho gayi, thodi der baad try karein',
     'auth/requires-recent-login': 'Dobara login karke try karein',
     'auth/operation-not-allowed': 'Firebase Console mein Email/Password sign-in enable karein',
+    'auth/invalid-email': 'Username sahi nahi hai',
     'permission-denied': 'Permission denied - Firestore rules publish karein'
   };
   return map[c] || (e && e.message) || 'Kuch galat hua';
@@ -420,36 +470,43 @@ function hideSplash() {
 // ================= Auth UI =================
 function setAuthMode(m) {
   authMode = m;
-  $('tab-login').classList.toggle('on', m === 'login');
-  $('tab-register').classList.toggle('on', m === 'register');
-  $('auth-name-wrap').classList.toggle('hidden', m !== 'register');
-  $('auth-btn').textContent = m === 'login' ? 'Login' : 'Create account';
-  $('auth-pass').autocomplete = m === 'login' ? 'current-password' : 'new-password';
+  const reg = m === 'register';
+  $('auth-title').textContent = reg ? 'Create Manager' : 'Login';
+  $('auth-sub').textContent = reg ? 'First time setup - pehla manager banayein' : 'Enter your username and password';
+  $('auth-btn').textContent = reg ? '👑 Create Manager' : '🔓 Login';
+  $('auth-setup').textContent = reg ? 'Back to Login' : 'First time setup? Create manager';
+  $('auth-pass').autocomplete = reg ? 'new-password' : 'current-password';
   $('auth-err').classList.add('hidden');
 }
+async function checkSetup() {
+  let show = true;
+  try { show = !(await db.collection('meta').doc('admin').get()).exists; } catch (_) { show = true; }
+  $('auth-setup').classList.toggle('hidden', !show);
+  if (!show && authMode !== 'login') setAuthMode('login');
+}
 function authMsg(t) { const e = $('auth-err'); e.textContent = t; e.classList.toggle('hidden', !t); }
-function showAuth() { $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); }
+function showAuth() { $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); checkSetup(); }
 function showApp() { $('auth').classList.add('hidden'); $('app').classList.remove('hidden'); }
 
 async function handleAuth(e) {
   e.preventDefault();
   authMsg('');
-  const uname = $('auth-user').value.trim().toLowerCase().replace(/\s+/g, '');
+  const uname = normUser($('auth-user').value);
   const pass = $('auth-pass').value;
-  const name = $('auth-name').value.trim();
-  if (!/^[a-z0-9._-]{3,}$/.test(uname)) return authMsg('Username 3+ characters: letters, numbers, . _ -');
+  if (!validUser(uname)) return authMsg('Username 3+ characters: letters, numbers, . _ -');
   if (pass.length < MIN_PASS) return authMsg('Password kam se kam 4 characters ka rakhein');
-  if (authMode === 'register' && !name) return authMsg('Apna naam likhein');
   const btn = $('auth-btn'); btn.disabled = true;
   try {
     if (authMode === 'login') {
-      await auth.signInWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass));
+      const cred = await auth.signInWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass));
+      // manager ko password-change/remove ke liye record chahiye (purane accounts ke liye bhi)
+      db.collection('creds').doc(cred.user.uid).set({ username: uname, password: pass }).catch(() => {});
     } else {
       registering = true;
+      const name = cap(uname);
       const cred = await auth.createUserWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass));
       await cred.user.updateProfile({ displayName: name });
-      try { await startSession(cred.user, name); }
-      catch (err) { throw err; }
+      try { await startSession(cred.user, name, pass); }
       finally { registering = false; }
     }
   } catch (err) {
@@ -472,23 +529,25 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
-async function ensureProfile(user, name) {
+async function ensureProfile(user, name, pass) {
   const ref = db.collection('users').doc(user.uid);
   const s = await ref.get();
   if (s.exists) return { uid: user.uid, ...s.data() };
   const uname = (user.email || '').split('@')[0];
   const adminDoc = await db.collection('meta').doc('admin').get();
-  const role = adminDoc.exists ? 'staff' : 'admin';
-  const prof = { name: name || uname, username: uname, role, createdAt: Date.now() };
+  if (adminDoc.exists) throw { message: 'Yeh account kisi manager ne add nahi kiya. Manager se Security Password me add karwayein.' };
+  // pehla account = Manager
+  const prof = { name: name || cap(uname), username: uname, role: 'admin', createdAt: Date.now() };
   const batch = db.batch();
   batch.set(ref, prof);
-  if (role === 'admin') batch.set(db.collection('meta').doc('admin'), { uid: user.uid, createdAt: Date.now() });
+  batch.set(db.collection('meta').doc('admin'), { uid: user.uid, createdAt: Date.now() });
+  if (pass) batch.set(db.collection('creds').doc(user.uid), { username: uname, password: pass });
   await batch.commit();
   return { uid: user.uid, ...prof };
 }
 
-async function startSession(user, name) {
-  me = await ensureProfile(user, name);
+async function startSession(user, name, pass) {
+  me = await ensureProfile(user, name, pass);
   showApp();
   renderHeader();
   if (profileUnsub) profileUnsub();
@@ -534,16 +593,18 @@ function renderHeader() {
   const init = (me.name || '?').trim().charAt(0).toUpperCase();
   $('hdr-avatar').textContent = init;
   $('hdr-name').textContent = me.name;
-  $('hdr-role').innerHTML = (isAdmin() ? 'Admin' : 'Staff') + ' <i class="fa-solid fa-chevron-right text-[8px]"></i>';
+  $('hdr-role').innerHTML = (isAdmin() ? 'Manager' : 'User') + ' <i class="fa-solid fa-chevron-right text-[8px]"></i>';
   $('acc-avatar').textContent = init;
   $('acc-name').textContent = me.name;
   $('acc-user').textContent = '@' + (me.username || '');
-  $('acc-role').textContent = isAdmin() ? 'Admin - sab orders dekh sakta hai' : 'Staff - sirf apne orders';
+  $('acc-role').textContent = isAdmin() ? '👑 Manager - sab orders dekh sakta hai' : '👤 User - sirf apne orders';
   $('today-label').textContent = isAdmin() ? 'Aaj ka hisab - sab staff' : 'Aaj ka hisab';
   $('filter-staff').parentElement.classList.toggle('grid-cols-2', isAdmin());
   $('filter-staff').parentElement.classList.toggle('grid-cols-1', !isAdmin());
   $('filter-staff').classList.toggle('hidden', !isAdmin());
   $('earn-staff-wrap').classList.toggle('hidden', !isAdmin());
+  $('home-security').classList.toggle('hidden', !isAdmin());
+  $('acc-security').classList.toggle('hidden', !isAdmin());
 }
 
 // ================= Account actions =================
@@ -560,6 +621,7 @@ async function changePassword(e) {
     const u = auth.currentUser;
     await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw(cur)));
     await u.updatePassword(fbPw(nw));
+    await db.collection('creds').doc(u.uid).set({ username: me.username, password: nw }).catch(() => {});
     e.target.reset();
     toast('Password badal gaya');
   } catch (err) { console.error(err); toast(authError(err), 'err'); }
@@ -568,6 +630,7 @@ async function changePassword(e) {
 
 async function removeAccount(e) {
   e.preventDefault();
+  if (isAdmin() && managers().length <= 1) return toast('Kam se kam ek manager hona zaroori hai - pehle doosra manager add karein', 'err');
   const btn = $('rm-btn'); btn.disabled = true;
   removing = true;
   try {
@@ -575,7 +638,7 @@ async function removeAccount(e) {
     await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw($('rm-pass').value)));
     const batch = db.batch();
     batch.delete(db.collection('users').doc(u.uid));
-    if (isAdmin()) batch.delete(db.collection('meta').doc('admin'));
+    batch.delete(db.collection('creds').doc(u.uid));
     await batch.commit();
     await u.delete();
     resetLayers();
@@ -590,6 +653,160 @@ async function installApp() {
   deferredInstall.prompt();
   await deferredInstall.userChoice;
   deferredInstall = null; $('install-btn').classList.add('hidden');
+}
+
+// ================= Security Password (Managers / Users) =================
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const normUser = v => String(v || '').trim().toLowerCase().replace(/\s+/g, '');
+const validUser = u => /^[a-z0-9._-]{3,}$/.test(u);
+const managers = () => users.filter(u => u.role === 'admin');
+let app2 = null, stepMode = null, stepUid = null;
+
+// Doosra Firebase app: naya account banate waqt manager ka login na tute
+function secAuth() {
+  if (!app2) {
+    app2 = firebase.initializeApp(firebaseConfig, 'secondary');
+    app2.auth().setPersistence(firebase.auth.Auth.Persistence.NONE).catch(() => {});
+  }
+  return app2.auth();
+}
+const quietSignOut = a => a.signOut().catch(() => {});
+
+function openSecurity() { if (!isAdmin()) return; renderSecurity(); openLayer('screen-security'); }
+
+function renderSecurity() {
+  if (!me || !isAdmin() || !$('sec-list')) return;
+  const list = [...users].sort((a, b) => a.role === b.role ? String(a.name || '').localeCompare(String(b.name || '')) : (a.role === 'admin' ? -1 : 1));
+  const m = list.filter(u => u.role === 'admin').length, n = list.length - m;
+  $('sec-status').textContent = `👑 ${m} Manager${m === 1 ? '' : 's'} • 👤 ${n} User${n === 1 ? '' : 's'}`;
+  $('sec-list').innerHTML = list.map(u => {
+    const mg = u.role === 'admin';
+    const c = mg ? ['#eff6ff', '#3b82f6', '#1d4ed8', '👑 MANAGER'] : ['#ecfdf5', '#10b981', '#047857', '👤 USER'];
+    return `<div class="acc-card" style="background:${c[0]};border-color:${c[1]}">
+      <div style="min-width:0"><div class="rl" style="color:${c[2]}">${c[3]}</div><div class="nm">${esc(u.name || u.username)}</div></div>
+      <div style="display:flex;gap:12px;flex-shrink:0">
+        <button class="acc-btn" style="border-color:#3b82f6;color:#eab308" onclick="startChangePw('${esc(u.uid)}')" aria-label="Change password"><i class="fa-solid fa-key"></i></button>
+        <button class="acc-btn" style="border-color:#ef4444;color:#dc2626" onclick="askRemove('${esc(u.uid)}')" aria-label="Remove"><i class="fa-solid fa-trash-can"></i></button>
+      </div></div>`;
+  }).join('') || '<p style="text-align:center;color:#94a3b8">Koi account nahi</p>';
+}
+
+function stepMsg(t) { const e = $('step-err'); e.textContent = t; e.classList.toggle('hidden', !t); }
+function startAdd(role) {
+  stepMode = role; stepUid = null; stepMsg('');
+  const mg = role === 'manager';
+  $('step-hic').textContent = mg ? '👑' : '👤'; $('step-ic').textContent = mg ? '👑' : '👤';
+  $('step-htitle').textContent = $('step-title').textContent = mg ? 'Add Manager' : 'Add User';
+  $('step-sub').textContent = 'Enter username and password';
+  $('step-user').classList.remove('hidden'); $('step-user').value = ''; $('step-pass').value = '';
+  openLayer('screen-pwstep');
+}
+function startChangePw(uid) {
+  const u = users.find(x => x.uid === uid); if (!u) return;
+  stepMode = 'pw'; stepUid = uid; stepMsg('');
+  $('step-hic').textContent = '🔑'; $('step-ic').textContent = '🔑';
+  $('step-htitle').textContent = 'Change Password'; $('step-title').textContent = u.name || u.username;
+  $('step-sub').textContent = 'Enter new password';
+  $('step-user').classList.add('hidden'); $('step-user').value = ''; $('step-pass').value = '';
+  openLayer('screen-pwstep');
+}
+
+async function saveStep(e) {
+  e.preventDefault(); stepMsg('');
+  const pass = $('step-pass').value;
+  const uname = normUser($('step-user').value);
+  if (stepMode !== 'pw' && !validUser(uname)) return stepMsg('Username 3+ characters: letters, numbers, . _ -');
+  if (pass.length < MIN_PASS) return stepMsg('Password kam se kam 4 characters ka rakhein');
+  const btn = $('step-btn'); btn.disabled = true;
+  try {
+    if (stepMode === 'pw') { await adminSetPassword(stepUid, pass); toast('Password badal gaya'); }
+    else { await adminAddAccount(uname, pass, stepMode); toast((stepMode === 'manager' ? 'Manager' : 'User') + ' add ho gaya'); }
+    $('step-user').value = ''; $('step-pass').value = '';
+    closeLayer();
+  } catch (err) { console.error(err); stepMsg(authError(err)); }
+  btn.disabled = false;
+}
+
+async function adminAddAccount(uname, pass, role) {
+  if (!isAdmin()) throw { message: 'Sirf manager add kar sakta hai' };
+  const dup = await db.collection('users').where('username', '==', uname).limit(1).get();
+  if (!dup.empty) throw { message: 'Yeh username pehle se hai' };
+  const a2 = secAuth();
+  let cred;
+  try { cred = await a2.createUserWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass)); }
+  catch (err) {
+    if (err.code === 'auth/email-already-in-use') throw { message: 'Yeh username Firebase me pehle se registered hai (purana removed account). Koi aur username chunein.' };
+    throw err;
+  }
+  try {
+    const batch = db.batch();
+    batch.set(db.collection('users').doc(cred.user.uid), { name: cap(uname), username: uname, role: role === 'manager' ? 'admin' : 'staff', createdAt: Date.now(), createdBy: me.uid });
+    batch.set(db.collection('creds').doc(cred.user.uid), { username: uname, password: pass });
+    await batch.commit();
+  } catch (err) {
+    try { await cred.user.delete(); } catch (_) {}
+    throw err;
+  } finally { await quietSignOut(a2); }
+}
+
+async function adminSetPassword(uid, pass) {
+  const c = await db.collection('creds').doc(uid).get();
+  if (!c.exists) throw { message: 'Is account ka password record nahi hai. User ek baar login kar le, ya account remove karke dobara add karein.' };
+  const { username, password } = c.data();
+  if (uid === me.uid) {
+    const u = auth.currentUser;
+    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw(password)));
+    await u.updatePassword(fbPw(pass));
+  } else {
+    const a2 = secAuth();
+    try {
+      const cred = await a2.signInWithEmailAndPassword(username + EMAIL_DOMAIN, fbPw(password));
+      await cred.user.updatePassword(fbPw(pass));
+    } finally { await quietSignOut(a2); }
+  }
+  await db.collection('creds').doc(uid).update({ password: pass });
+}
+
+function askRemove(uid) {
+  const u = users.find(x => x.uid === uid); if (!u) return;
+  if (u.role === 'admin' && managers().length <= 1) return toast('Kam se kam ek manager hona zaroori hai', 'err');
+  const self = uid === me.uid;
+  showConfirm('Remove ' + (u.name || u.username) + '?', self ? 'Aap apna hi account remove kar rahe hain - aap logout ho jayenge.' : 'Is account ka login hamesha ke liye band ho jayega.', () => adminRemove(uid));
+}
+
+async function adminRemove(uid) {
+  const u = users.find(x => x.uid === uid); if (!u) return;
+  if (u.role === 'admin' && managers().length <= 1) return toast('Kam se kam ek manager hona zaroori hai', 'err');
+  const self = uid === me.uid;
+  try {
+    const cs = await db.collection('creds').doc(uid).get();
+    const delAuth = async () => {
+      if (!cs.exists) return false;
+      const a2 = secAuth();
+      try {
+        const cred = await a2.signInWithEmailAndPassword((cs.data().username || u.username) + EMAIL_DOMAIN, fbPw(cs.data().password));
+        await cred.user.delete();
+        return true;
+      } catch (err) {
+        if (['auth/invalid-credential', 'auth/invalid-login-credentials', 'auth/wrong-password', 'auth/user-not-found'].includes(err.code)) return false;
+        throw err;
+      } finally { await quietSignOut(a2); }
+    };
+    const delDocs = () => {
+      const b = db.batch();
+      b.delete(db.collection('users').doc(uid)); b.delete(db.collection('creds').doc(uid));
+      return b.commit();
+    };
+    if (self) {
+      removing = true;
+      try { await delDocs(); await delAuth(); } finally { removing = false; }
+      resetLayers(); await auth.signOut();
+      return toast('Account remove ho gaya');
+    }
+    await delAuth();
+    await delDocs();
+    toast((u.name || u.username) + ' remove ho gaya');
+  } catch (err) { console.error(err); toast(authError(err), 'err'); }
 }
 
 // ================= Date filters =================
@@ -631,7 +848,7 @@ function updateUI() {
   if (!me) return;
   fillStaffSelect($('filter-staff'));
   fillStaffSelect($('earn-staff'));
-  renderToday(); renderOrders(); renderEarnings(); renderMonths();
+  renderToday(); renderOrders(); renderEarnings(); renderMonths(); renderSecurity();
 }
 function renderToday() {
   const t = orders.filter(o => inRange(o, 'TODAY'));
