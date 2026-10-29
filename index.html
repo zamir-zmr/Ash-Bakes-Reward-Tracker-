@@ -381,7 +381,7 @@ const firebaseConfig = {
         };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+db.settings({ experimentalForceLongPolling: true, useFetchStreams: false, merge: true });
 
 // ================= Constants / State =================
 const MIN_PASS = 4;
@@ -439,6 +439,7 @@ function authError(e) {
     'auth/user-not-found': 'Yeh username nahi mila',
     'auth/email-already-in-use': 'Yeh username pehle se liya hua hai',
     'auth/weak-password': 'Password kam se kam 4 characters ka rakhein',
+    'unavailable': 'Firestore se connect nahi hua - internet check karein ya Firebase me Firestore Database create karein',
     'not-found': 'Firebase me Firestore Database create nahi hai',
     'failed-precondition': 'Firebase me Firestore Database create nahi hai',
     'auth/network-request-failed': 'Internet check karein',
@@ -448,6 +449,7 @@ function authError(e) {
     'auth/invalid-email': 'Username sahi nahi hai',
     'permission-denied': 'Firestore rules block kar rahe hain - naye firestore.rules publish karein'
   };
+  if (/offline/i.test((e && e.message) || '')) return map['unavailable'];
   return map[c] || (e && e.message) || 'Kuch galat hua';
 }
 
