@@ -14,7 +14,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -381,20 +380,29 @@ const firebaseConfig = {
             appId: "1:62622240064:web:cdceb080627e6d4ed7fea5"
         };
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
 const db = firebase.firestore();
 db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
 // ================= Constants / State =================
-const EMAIL_DOMAIN = '@ashbakes.app';
 const MIN_PASS = 4;
-// Firebase kam se kam 6 chars maangta hai; chhote password me hidden suffix jodte hain (6+ wale same rehte hain)
-const fbPw = p => p.length >= 6 ? p : p + '\u00b7ash\u00b7';
+const SES_KEY = 'ash_session';
+// Password PBKDF2-SHA256 se hash hota hai (plain password kahin save nahi hota)
+const b2h = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+async function hashPw(pass, salt) {
+  if (!(window.crypto && crypto.subtle)) throw { message: 'Secure (https) page par kholein' };
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(salt), iterations: 60000 }, key, 256);
+  return b2h(bits);
+}
+const newSalt = () => b2h(crypto.getRandomValues(new Uint8Array(16)));
+const getSes = () => { try { return JSON.parse(localStorage.getItem(SES_KEY)); } catch (_) { return null; } };
+const setSes = (u, h) => { try { localStorage.setItem(SES_KEY, JSON.stringify({ u, h })); } catch (_) {} };
+const clearSes = () => { try { localStorage.removeItem(SES_KEY); } catch (_) {} };
 const REWARD_MIN = 20, REWARD_AMT = 1;
 let me = null;               // {uid,name,username,role}
 let orders = [], users = [];
 let dataUnsubs = [], profileUnsub = null;
-let registering = false, removing = false, authMode = 'login';
+let authMode = 'login', selfChange = false;
 let homeRange = 'ALL', earnRange = 'MONTH';
 let confirmActionHandler = null, deferredInstall = null;
 const splashStart = Date.now();
@@ -431,13 +439,14 @@ function authError(e) {
     'auth/user-not-found': 'Yeh username nahi mila',
     'auth/email-already-in-use': 'Yeh username pehle se liya hua hai',
     'auth/weak-password': 'Password kam se kam 4 characters ka rakhein',
-    'auth/configuration-not-found': 'Firebase Console > Authentication > Get started karke Email/Password enable karein',
+    'not-found': 'Firebase me Firestore Database create nahi hai',
+    'failed-precondition': 'Firebase me Firestore Database create nahi hai',
     'auth/network-request-failed': 'Internet check karein',
     'auth/too-many-requests': 'Bahut koshish ho gayi, thodi der baad try karein',
     'auth/requires-recent-login': 'Dobara login karke try karein',
     'auth/operation-not-allowed': 'Firebase Console mein Email/Password sign-in enable karein',
     'auth/invalid-email': 'Username sahi nahi hai',
-    'permission-denied': 'Permission denied - Firestore rules publish karein'
+    'permission-denied': 'Firestore rules block kar rahe hain - naye firestore.rules publish karein'
   };
   return map[c] || (e && e.message) || 'Kuch galat hua';
 }
@@ -497,67 +506,64 @@ async function handleAuth(e) {
   if (pass.length < MIN_PASS) return authMsg('Password kam se kam 4 characters ka rakhein');
   const btn = $('auth-btn'); btn.disabled = true;
   try {
+    const ref = db.collection('users').doc(uname);
+    const snap = await ref.get();
     if (authMode === 'login') {
-      const cred = await auth.signInWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass));
-      // manager ko password-change/remove ke liye record chahiye (purane accounts ke liye bhi)
-      db.collection('creds').doc(cred.user.uid).set({ username: uname, password: pass }).catch(() => {});
+      const d = snap.exists ? snap.data() : null;
+      if (!d || !d.hash || d.hash !== await hashPw(pass, d.salt)) throw { message: 'Username ya password galat hai' };
+      setSes(uname, d.hash);
+      await startSession({ uid: uname, ...d });
     } else {
-      registering = true;
-      const name = cap(uname);
-      const cred = await auth.createUserWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass));
-      await cred.user.updateProfile({ displayName: name });
-      try { await startSession(cred.user, name, pass); }
-      finally { registering = false; }
+      // First time setup: pehla manager seedha app se Firebase me register
+      const adm = await db.collection('meta').doc('admin').get();
+      if (adm.exists) throw { message: 'Manager pehle se bana hua hai - Login karein' };
+      if (snap.exists) throw { message: 'Yeh username pehle se hai' };
+      const salt = newSalt(), hash = await hashPw(pass, salt);
+      const prof = { name: cap(uname), username: uname, role: 'admin', salt, hash, createdAt: Date.now() };
+      const b = db.batch();
+      b.set(ref, prof);
+      b.set(db.collection('meta').doc('admin'), { uid: uname, createdAt: Date.now() });
+      await b.commit();
+      setSes(uname, hash);
+      await startSession({ uid: uname, ...prof });
     }
+    $('auth-pass').value = '';
   } catch (err) {
-    registering = false;
     console.error(err);
     authMsg(authError(err));
-    if (authMode === 'register' && auth.currentUser) { try { await auth.signOut(); } catch (_) {} }
   } finally { btn.disabled = false; }
 }
 
 // ================= Session =================
-auth.onAuthStateChanged(async user => {
-  if (registering) return;
-  if (!user) { endSession(); showAuth(); hideSplash(); return; }
-  try { await startSession(user, user.displayName); }
-  catch (err) {
+async function bootSession() {
+  const ses = getSes();
+  if (!ses || !ses.u) { endSession(); showAuth(); hideSplash(); return; }
+  try {
+    const snap = await db.collection('users').doc(ses.u).get();
+    const d = snap.exists ? snap.data() : null;
+    if (!d || d.hash !== ses.h) { clearSes(); endSession(); showAuth(); hideSplash(); return; }
+    await startSession({ uid: ses.u, ...d });
+  } catch (err) {
     console.error(err);
     toast(authError(err), 'err');
-    await auth.signOut();
+    endSession(); showAuth(); hideSplash();
   }
-});
-
-async function ensureProfile(user, name, pass) {
-  const ref = db.collection('users').doc(user.uid);
-  const s = await ref.get();
-  if (s.exists) return { uid: user.uid, ...s.data() };
-  const uname = (user.email || '').split('@')[0];
-  const adminDoc = await db.collection('meta').doc('admin').get();
-  if (adminDoc.exists) throw { message: 'Yeh account kisi manager ne add nahi kiya. Manager se Security Password me add karwayein.' };
-  // pehla account = Manager
-  const prof = { name: name || cap(uname), username: uname, role: 'admin', createdAt: Date.now() };
-  const batch = db.batch();
-  batch.set(ref, prof);
-  batch.set(db.collection('meta').doc('admin'), { uid: user.uid, createdAt: Date.now() });
-  if (pass) batch.set(db.collection('creds').doc(user.uid), { username: uname, password: pass });
-  await batch.commit();
-  return { uid: user.uid, ...prof };
 }
 
-async function startSession(user, name, pass) {
-  me = await ensureProfile(user, name, pass);
+async function startSession(profile) {
+  me = profile;
   showApp();
   renderHeader();
   if (profileUnsub) profileUnsub();
-  profileUnsub = db.collection('users').doc(user.uid).onSnapshot(s => {
-    if (!s.exists) {
-      if (!removing && !registering) { toast('Account remove ho gaya hai', 'err'); auth.signOut(); }
+  profileUnsub = db.collection('users').doc(me.uid).onSnapshot(s => {
+    if (!me || selfChange) return;
+    if (!s.exists || s.data().hash !== me.hash) {   // remove ho gaya ya password badal gaya
+      toast(s.exists ? 'Password badal gaya - dobara login karein' : 'Account remove ho gaya hai', 'err');
+      doLogout();
       return;
     }
-    const prevRole = me && me.role;
-    me = { uid: user.uid, ...s.data() };
+    const prevRole = me.role;
+    me = { uid: me.uid, ...s.data() };
     renderHeader();
     if (prevRole !== me.role) subscribeData(); else updateUI();
   }, err => console.error(err));
@@ -609,7 +615,7 @@ function renderHeader() {
 
 // ================= Account actions =================
 function openAccount() { openLayer('screen-account'); }
-async function doLogout() { resetLayers(); await auth.signOut(); }
+async function doLogout() { clearSes(); endSession(); showAuth(); }
 
 async function changePassword(e) {
   e.preventDefault();
@@ -618,33 +624,38 @@ async function changePassword(e) {
   if (nw !== nw2) return toast('Dono naye password match nahi karte', 'err');
   const btn = $('pw-btn'); btn.disabled = true;
   try {
-    const u = auth.currentUser;
-    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw(cur)));
-    await u.updatePassword(fbPw(nw));
-    await db.collection('creds').doc(u.uid).set({ username: me.username, password: nw }).catch(() => {});
+    if (await hashPw(cur, me.salt) !== me.hash) throw { message: 'Current password galat hai' };
+    await setPassword(me.uid, nw);
     e.target.reset();
     toast('Password badal gaya');
   } catch (err) { console.error(err); toast(authError(err), 'err'); }
   btn.disabled = false;
 }
 
+// kisi bhi account ka password badalna (apna ho to session bana rehta hai)
+async function setPassword(uid, pass) {
+  const salt = newSalt(), hash = await hashPw(pass, salt);
+  const self = me && uid === me.uid;
+  if (self) selfChange = true;
+  try {
+    await db.collection('users').doc(uid).update({ salt, hash });
+    if (self) { me.salt = salt; me.hash = hash; setSes(uid, hash); }
+  } finally { if (self) setTimeout(() => { selfChange = false; }, 1000); }
+}
+
 async function removeAccount(e) {
   e.preventDefault();
   if (isAdmin() && managers().length <= 1) return toast('Kam se kam ek manager hona zaroori hai - pehle doosra manager add karein', 'err');
   const btn = $('rm-btn'); btn.disabled = true;
-  removing = true;
   try {
-    const u = auth.currentUser;
-    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw($('rm-pass').value)));
-    const batch = db.batch();
-    batch.delete(db.collection('users').doc(u.uid));
-    batch.delete(db.collection('creds').doc(u.uid));
-    await batch.commit();
-    await u.delete();
-    resetLayers();
+    if (await hashPw($('rm-pass').value, me.salt) !== me.hash) throw { message: 'Password galat hai' };
+    selfChange = true;
+    await db.collection('users').doc(me.uid).delete();
+    selfChange = false;
     toast('Account remove ho gaya');
-  } catch (err) { console.error(err); toast(authError(err), 'err'); }
-  removing = false; btn.disabled = false; $('rm-pass').value = '';
+    doLogout();
+  } catch (err) { selfChange = false; console.error(err); toast(authError(err), 'err'); }
+  btn.disabled = false; $('rm-pass').value = '';
 }
 
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('install-btn').classList.remove('hidden'); });
@@ -660,17 +671,7 @@ const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 const normUser = v => String(v || '').trim().toLowerCase().replace(/\s+/g, '');
 const validUser = u => /^[a-z0-9._-]{3,}$/.test(u);
 const managers = () => users.filter(u => u.role === 'admin');
-let app2 = null, stepMode = null, stepUid = null;
-
-// Doosra Firebase app: naya account banate waqt manager ka login na tute
-function secAuth() {
-  if (!app2) {
-    app2 = firebase.initializeApp(firebaseConfig, 'secondary');
-    app2.auth().setPersistence(firebase.auth.Auth.Persistence.NONE).catch(() => {});
-  }
-  return app2.auth();
-}
-const quietSignOut = a => a.signOut().catch(() => {});
+let stepMode = null, stepUid = null;
 
 function openSecurity() { if (!isAdmin()) return; renderSecurity(); openLayer('screen-security'); }
 
@@ -729,43 +730,13 @@ async function saveStep(e) {
 
 async function adminAddAccount(uname, pass, role) {
   if (!isAdmin()) throw { message: 'Sirf manager add kar sakta hai' };
-  const dup = await db.collection('users').where('username', '==', uname).limit(1).get();
-  if (!dup.empty) throw { message: 'Yeh username pehle se hai' };
-  const a2 = secAuth();
-  let cred;
-  try { cred = await a2.createUserWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass)); }
-  catch (err) {
-    if (err.code === 'auth/email-already-in-use') throw { message: 'Yeh username Firebase me pehle se registered hai (purana removed account). Koi aur username chunein.' };
-    throw err;
-  }
-  try {
-    const batch = db.batch();
-    batch.set(db.collection('users').doc(cred.user.uid), { name: cap(uname), username: uname, role: role === 'manager' ? 'admin' : 'staff', createdAt: Date.now(), createdBy: me.uid });
-    batch.set(db.collection('creds').doc(cred.user.uid), { username: uname, password: pass });
-    await batch.commit();
-  } catch (err) {
-    try { await cred.user.delete(); } catch (_) {}
-    throw err;
-  } finally { await quietSignOut(a2); }
+  const ref = db.collection('users').doc(uname);
+  if ((await ref.get()).exists) throw { message: 'Yeh username pehle se hai' };
+  const salt = newSalt(), hash = await hashPw(pass, salt);
+  await ref.set({ name: cap(uname), username: uname, role: role === 'manager' ? 'admin' : 'staff', salt, hash, createdAt: Date.now(), createdBy: me.uid });
 }
 
-async function adminSetPassword(uid, pass) {
-  const c = await db.collection('creds').doc(uid).get();
-  if (!c.exists) throw { message: 'Is account ka password record nahi hai. User ek baar login kar le, ya account remove karke dobara add karein.' };
-  const { username, password } = c.data();
-  if (uid === me.uid) {
-    const u = auth.currentUser;
-    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw(password)));
-    await u.updatePassword(fbPw(pass));
-  } else {
-    const a2 = secAuth();
-    try {
-      const cred = await a2.signInWithEmailAndPassword(username + EMAIL_DOMAIN, fbPw(password));
-      await cred.user.updatePassword(fbPw(pass));
-    } finally { await quietSignOut(a2); }
-  }
-  await db.collection('creds').doc(uid).update({ password: pass });
-}
+async function adminSetPassword(uid, pass) { await setPassword(uid, pass); }
 
 function askRemove(uid) {
   const u = users.find(x => x.uid === uid); if (!u) return;
@@ -779,34 +750,11 @@ async function adminRemove(uid) {
   if (u.role === 'admin' && managers().length <= 1) return toast('Kam se kam ek manager hona zaroori hai', 'err');
   const self = uid === me.uid;
   try {
-    const cs = await db.collection('creds').doc(uid).get();
-    const delAuth = async () => {
-      if (!cs.exists) return false;
-      const a2 = secAuth();
-      try {
-        const cred = await a2.signInWithEmailAndPassword((cs.data().username || u.username) + EMAIL_DOMAIN, fbPw(cs.data().password));
-        await cred.user.delete();
-        return true;
-      } catch (err) {
-        if (['auth/invalid-credential', 'auth/invalid-login-credentials', 'auth/wrong-password', 'auth/user-not-found'].includes(err.code)) return false;
-        throw err;
-      } finally { await quietSignOut(a2); }
-    };
-    const delDocs = () => {
-      const b = db.batch();
-      b.delete(db.collection('users').doc(uid)); b.delete(db.collection('creds').doc(uid));
-      return b.commit();
-    };
-    if (self) {
-      removing = true;
-      try { await delDocs(); await delAuth(); } finally { removing = false; }
-      resetLayers(); await auth.signOut();
-      return toast('Account remove ho gaya');
-    }
-    await delAuth();
-    await delDocs();
+    if (self) selfChange = true;
+    await db.collection('users').doc(uid).delete();
+    if (self) { selfChange = false; toast('Account remove ho gaya'); return doLogout(); }
     toast((u.name || u.username) + ' remove ho gaya');
-  } catch (err) { console.error(err); toast(authError(err), 'err'); }
+  } catch (err) { selfChange = false; console.error(err); toast(authError(err), 'err'); }
 }
 
 // ================= Date filters =================
@@ -1088,6 +1036,7 @@ function openMonth(k) {
 }
 
 // ================= PWA =================
+bootSession();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
