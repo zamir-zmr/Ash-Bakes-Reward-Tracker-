@@ -98,7 +98,7 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
         <form onsubmit="handleAuth(event)" class="space-y-3" autocomplete="on">
           <div id="auth-name-wrap" class="hidden"><p class="label mb-1">Full name</p><input id="auth-name" class="field" placeholder="e.g. Zamir Ansari" autocomplete="name"></div>
           <div><p class="label mb-1">Username</p><input id="auth-user" class="field" placeholder="e.g. zamir" autocapitalize="none" autocomplete="username" required></div>
-          <div><p class="label mb-1">Password</p><input id="auth-pass" type="password" class="field" placeholder="min 6 characters" autocomplete="current-password" required></div>
+          <div><p class="label mb-1">Password</p><input id="auth-pass" type="password" class="field" placeholder="min 4 characters" autocomplete="current-password" required></div>
           <p id="auth-err" class="text-xs font-semibold text-rose-400 hidden"></p>
           <button id="auth-btn" type="submit" class="btn btn-primary w-full">Login</button>
         </form>
@@ -247,7 +247,7 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
       <form onsubmit="changePassword(event)" class="card p-5 space-y-3">
         <h3 class="font-extrabold text-sm flex items-center gap-2"><i class="fa-solid fa-key text-amber-400"></i> Change password</h3>
         <input type="password" id="pw-cur" class="field" placeholder="Current password" autocomplete="current-password" required>
-        <input type="password" id="pw-new" class="field" placeholder="New password (min 6)" autocomplete="new-password" required>
+        <input type="password" id="pw-new" class="field" placeholder="New password (min 4)" autocomplete="new-password" required>
         <input type="password" id="pw-new2" class="field" placeholder="Confirm new password" autocomplete="new-password" required>
         <button id="pw-btn" class="btn btn-primary w-full" type="submit">Update password</button>
       </form>
@@ -338,6 +338,9 @@ db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
 // ================= Constants / State =================
 const EMAIL_DOMAIN = '@ashbakes.app';
+const MIN_PASS = 4;
+// Firebase kam se kam 6 chars maangta hai; chhote password me hidden suffix jodte hain (6+ wale same rehte hain)
+const fbPw = p => p.length >= 6 ? p : p + '\u00b7ash\u00b7';
 const REWARD_MIN = 20, REWARD_AMT = 1;
 let me = null;               // {uid,name,username,role}
 let orders = [], users = [];
@@ -378,7 +381,8 @@ function authError(e) {
     'auth/invalid-login-credentials': 'Username ya password galat hai',
     'auth/user-not-found': 'Yeh username nahi mila',
     'auth/email-already-in-use': 'Yeh username pehle se liya hua hai',
-    'auth/weak-password': 'Password kam se kam 6 characters ka rakhein',
+    'auth/weak-password': 'Password kam se kam 4 characters ka rakhein',
+    'auth/configuration-not-found': 'Firebase Console > Authentication > Get started karke Email/Password enable karein',
     'auth/network-request-failed': 'Internet check karein',
     'auth/too-many-requests': 'Bahut koshish ho gayi, thodi der baad try karein',
     'auth/requires-recent-login': 'Dobara login karke try karein',
@@ -434,15 +438,15 @@ async function handleAuth(e) {
   const pass = $('auth-pass').value;
   const name = $('auth-name').value.trim();
   if (!/^[a-z0-9._-]{3,}$/.test(uname)) return authMsg('Username 3+ characters: letters, numbers, . _ -');
-  if (pass.length < 6) return authMsg('Password kam se kam 6 characters ka rakhein');
+  if (pass.length < MIN_PASS) return authMsg('Password kam se kam 4 characters ka rakhein');
   if (authMode === 'register' && !name) return authMsg('Apna naam likhein');
   const btn = $('auth-btn'); btn.disabled = true;
   try {
     if (authMode === 'login') {
-      await auth.signInWithEmailAndPassword(uname + EMAIL_DOMAIN, pass);
+      await auth.signInWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass));
     } else {
       registering = true;
-      const cred = await auth.createUserWithEmailAndPassword(uname + EMAIL_DOMAIN, pass);
+      const cred = await auth.createUserWithEmailAndPassword(uname + EMAIL_DOMAIN, fbPw(pass));
       await cred.user.updateProfile({ displayName: name });
       try { await startSession(cred.user, name); }
       catch (err) { throw err; }
@@ -549,13 +553,13 @@ async function doLogout() { resetLayers(); await auth.signOut(); }
 async function changePassword(e) {
   e.preventDefault();
   const cur = $('pw-cur').value, nw = $('pw-new').value, nw2 = $('pw-new2').value;
-  if (nw.length < 6) return toast('Naya password kam se kam 6 characters', 'err');
+  if (nw.length < MIN_PASS) return toast('Naya password kam se kam 4 characters', 'err');
   if (nw !== nw2) return toast('Dono naye password match nahi karte', 'err');
   const btn = $('pw-btn'); btn.disabled = true;
   try {
     const u = auth.currentUser;
-    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, cur));
-    await u.updatePassword(nw);
+    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw(cur)));
+    await u.updatePassword(fbPw(nw));
     e.target.reset();
     toast('Password badal gaya');
   } catch (err) { console.error(err); toast(authError(err), 'err'); }
@@ -568,7 +572,7 @@ async function removeAccount(e) {
   removing = true;
   try {
     const u = auth.currentUser;
-    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, $('rm-pass').value));
+    await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, fbPw($('rm-pass').value)));
     const batch = db.batch();
     batch.delete(db.collection('users').doc(u.uid));
     if (isAdmin()) batch.delete(db.collection('meta').doc('admin'));
