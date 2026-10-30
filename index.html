@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ash Rewards">
-<title>Ash Bakes - Reward Tracker v13</title>
+<title>Ash Bakes - Reward Tracker v22</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -35,9 +35,11 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 .btn-danger{background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.4);color:#fb7185}
 .btn:disabled{opacity:.55}
 .hide-scroll::-webkit-scrollbar{display:none}.hide-scroll{scrollbar-width:none}
-.layer{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility .25s}
+.layer{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);visibility:hidden;transition:transform .25s ease,visibility .25s;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.safe-x{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .layer.open{transform:none;visibility:visible}
-.overlay{position:fixed;inset:0;z-index:70;background:rgba(5,9,18,.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:14px}
+.overlay{position:fixed;inset:0;z-index:70;background:rgba(5,9,18,.8);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto}
+.overlay>*{margin:auto}
 .overlay.open{display:flex}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px;min-width:0}
 .box .meta{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -47,19 +49,21 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 .st.p{background:rgba(245,165,36,.15);color:var(--accent)}.st.d{background:rgba(16,185,129,.15);color:#34d399}
 
 
-/* ---------- Light screens (Login / Security Password) ---------- */
-.lt-in{display:block;width:100%;background:#fff;border:2px solid #e2e8f0;border-radius:24px;padding:20px 24px;font-size:22px;color:#0f172a;outline:none;margin-bottom:14px;font-family:inherit}
+/* ---------- Light screens (Login / Security Password) - compact ---------- */
+.lt-in{display:block;width:100%;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:15px;color:#0f172a;outline:none;margin-bottom:10px;font-family:inherit}
 .lt-in:focus{border-color:#10b981}.lt-in::placeholder{color:#94a3b8}
-.lt-btn{display:block;width:100%;text-align:left;border:2px solid;border-radius:22px;padding:22px 24px;font-size:24px;font-weight:800;font-family:inherit;margin-top:6px}
+.lt-btn{display:block;width:100%;text-align:left;border:1.5px solid;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:800;font-family:inherit;margin-top:4px}
 .lt-btn:disabled{opacity:.55}
-.lt-hdr{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px 14px;background:linear-gradient(90deg,#f59e0b,#e11d48);box-shadow:0 8px 20px rgba(15,23,42,.18);position:relative;z-index:2}
-.lt-hdr .ic{width:52px;height:52px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
-.lt-hdr b{flex:1;color:#fff;font-size:26px;font-weight:800;line-height:1.1}
-.lt-hdr button{width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.35);color:#fff;font-size:32px;line-height:1}
-.acc-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:2px solid;border-radius:22px;padding:16px 16px 16px 20px;margin-bottom:14px}
-.acc-card .rl{font-size:15px;font-weight:800;letter-spacing:.06em}
-.acc-card .nm{font-size:30px;font-weight:800;color:#0f172a;line-height:1.15;word-break:break-word}
-.acc-btn{width:54px;height:54px;border-radius:16px;border:2px solid;background:#fff;font-size:22px;flex-shrink:0}
+.lt-hdr{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px 12px;background:linear-gradient(90deg,#f59e0b,#e11d48);box-shadow:0 4px 12px rgba(15,23,42,.15);position:relative;z-index:2}
+.lt-hdr .ic{width:36px;height:36px;border-radius:11px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.lt-hdr b{flex:1;color:#fff;font-size:18px;font-weight:800;line-height:1.1}
+.lt-hdr button{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.4);color:#fff;font-size:24px;line-height:1;flex-shrink:0}
+.acc-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid;border-radius:14px;padding:9px 10px 9px 14px;margin-bottom:10px}
+.acc-card .rl{font-size:11px;font-weight:800;letter-spacing:.06em}
+.acc-card .nm{font-size:17px;font-weight:800;color:#0f172a;line-height:1.2;word-break:break-word}
+.acc-btn{width:40px;height:40px;border-radius:12px;border:1.5px solid;background:#fff;font-size:16px;flex-shrink:0}
+.sec-grid{display:grid;grid-template-columns:1fr;column-gap:10px}
+@media (min-width:700px){.sec-grid{grid-template-columns:1fr 1fr}}
 
 /* ---------- Splash (round animation) ---------- */
 #splash{position:fixed;inset:0;z-index:200;background:#0f121a;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s;overflow:hidden}
@@ -81,6 +85,13 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 @keyframes load{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;z-index:300;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:700;max-width:90vw;text-align:center;transition:.25s;pointer-events:none}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+/* Mobile landscape */
+@media (orientation:landscape) and (max-height:520px){
+  .logo-wrap{width:118px;height:118px}.logo{width:88px;height:88px}.ring-soft{inset:-8px}
+  .s-title{margin-top:12px;font-size:22px}.s-sub{margin-top:2px;font-size:11px}.s-bar{margin-top:12px}
+  .lt-hdr{padding-top:calc(5px + env(safe-area-inset-top));padding-bottom:5px}
+  .overlay{padding:8px}
+}
 </style>
 </head>
 <body>
@@ -96,27 +107,31 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 <div id="toast"></div>
 
 <!-- ============ AUTH (Login) ============ -->
-<div id="auth" class="hidden fixed inset-0 z-[90] overflow-y-auto" style="background:#fff;color:#0f172a">
-  <div class="min-h-full flex items-center justify-center" style="padding:24px 24px calc(24px + env(safe-area-inset-bottom))">
-    <div class="w-full" style="max-width:480px">
-      <div style="text-align:center;font-size:56px;margin-bottom:6px">🔒</div>
-      <h3 id="auth-title" style="text-align:center;margin:0 0 6px;font-size:28px;font-weight:800;color:#0f172a">Login</h3>
-      <p id="auth-sub" style="text-align:center;color:#94a3b8;font-size:15px;margin:0 0 30px">Enter your username and password</p>
-      <form onsubmit="handleAuth(event)" autocomplete="on">
-        <input id="auth-user" class="lt-in" placeholder="Username" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required>
-        <input id="auth-pass" type="password" class="lt-in" placeholder="Password" autocomplete="current-password" required>
-        <p id="auth-err" class="hidden" style="color:#e11d48;font-size:13px;font-weight:700;margin:-4px 4px 12px"></p>
-        <button id="auth-btn" type="submit" class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857">🔓 Login</button>
-      </form>
-      <button id="auth-setup" type="button" onclick="setAuthMode(authMode==='login'?'register':'login')" class="hidden" style="display:block;margin:22px auto 0;background:none;border:none;color:#3b82f6;font-weight:700;font-size:13px">First time setup? Create manager</button>
+<div id="auth" class="hidden fixed inset-0 z-[90] safe-x" style="background:#fff;color:#0f172a">
+  <div style="display:flex;flex-direction:column;height:100%">
+    <div class="lt-hdr"><span class="ic">🔒</span><b id="auth-title">Login</b><button type="button" onclick="authClose()" aria-label="Close">×</button></div>
+    <div style="flex:1;overflow-y:auto">
+      <div style="min-height:100%;display:flex;align-items:center;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom))">
+        <div style="width:100%;max-width:380px">
+          <img src="icon-192.png" alt="" style="display:block;width:64px;height:64px;border-radius:50%;margin:0 auto 8px">
+          <p id="auth-sub" style="text-align:center;color:#64748b;font-size:13px;margin:0 0 14px">Enter your username and password</p>
+          <form onsubmit="handleAuth(event)" autocomplete="on">
+            <input id="auth-user" class="lt-in" placeholder="Username" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required>
+            <input id="auth-pass" type="password" class="lt-in" placeholder="Password" autocomplete="current-password" required>
+            <p id="auth-err" class="hidden" style="color:#e11d48;font-size:12px;font-weight:700;margin:-2px 2px 10px"></p>
+            <button id="auth-btn" type="submit" class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857;text-align:center">🔓 Login</button>
+          </form>
+          <button id="auth-setup" type="button" onclick="setAuthMode(authMode==='login'?'register':'login')" class="hidden" style="display:block;margin:14px auto 0;background:none;border:none;color:#3b82f6;font-weight:700;font-size:12px">First time setup? Create manager</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- ============ HOME ============ -->
-<div id="app" class="hidden">
+<div id="app" class="hidden safe-x">
 <header class="sticky top-0 z-40 bg-[#0b1220]/95 backdrop-blur border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
-  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
     <button onclick="openAccount()" class="flex items-center gap-3 min-w-0 text-left">
       <span id="hdr-avatar" class="w-11 h-11 rounded-full bg-gradient-to-br from-sky-400 to-amber-300 text-slate-900 font-extrabold text-lg flex items-center justify-center shrink-0 ring-2 ring-sky-400/30">?</span>
       <span class="min-w-0">
@@ -128,10 +143,10 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
   </div>
 </header>
 
-<main class="max-w-5xl mx-auto px-4 pt-4 space-y-4">
+<main class="max-w-7xl mx-auto px-4 pt-4 pb-8 space-y-4">
 
   <!-- Today -->
-  <section class="rounded-2xl p-4 border border-amber-400/25" style="background:linear-gradient(135deg,rgba(37,176,214,.14),rgba(245,165,36,.12))">
+  <section id="today-card" class="rounded-2xl p-4 border border-amber-400/25" style="background:linear-gradient(135deg,rgba(37,176,214,.14),rgba(245,165,36,.12))">
     <p class="label mb-3" id="today-label">Aaj ka hisab</p>
     <div class="grid grid-cols-3 gap-3">
       <div><p class="text-[11px] text-slate-400 font-semibold">Orders</p><p class="text-2xl font-extrabold" id="today-orders">0</p></div>
@@ -142,7 +157,7 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
   </section>
 
   <!-- Nav tiles -->
-  <section class="grid grid-cols-2 gap-3">
+  <section class="grid grid-cols-2 md:grid-cols-3 gap-3">
     <button onclick="openEarningsHome()" class="card p-4 text-left hover:border-amber-400/60 transition">
       <span class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/25 flex items-center justify-center mb-3"><i class="fa-solid fa-wallet"></i></span>
       <p class="font-extrabold text-sm leading-tight">Staff Earnings Breakdown</p>
@@ -183,7 +198,7 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
         <option value="ALL">All Status</option><option value="Pending">Pending Pickup</option><option value="Picked Up">Picked Up</option>
       </select>
     </div>
-    <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    <div id="orders-grid-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
   </section>
 </main>
 </div>
@@ -191,28 +206,28 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 <!-- ============ LAYER: STAFF EARNINGS ============ -->
 <div id="screen-earnings" class="layer">
   <header class="shrink-0 bg-[#0b1220] border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
-    <div class="max-w-3xl mx-auto w-full px-4 h-14 flex items-center justify-between">
+    <div class="max-w-6xl mx-auto w-full px-4 h-14 flex items-center justify-between">
       <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2.5"><i class="fa-solid fa-wallet text-amber-400"></i> Staff Earnings Breakdown</h2>
       <button onclick="closeLayer()" title="Close" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center text-lg transition"><i class="fa-solid fa-xmark"></i></button>
     </div>
   </header>
   <div class="shrink-0 border-b border-[#223052] bg-[#0e1628]">
-    <div class="max-w-3xl mx-auto w-full px-4 py-3 space-y-3">
-      <div id="earn-staff-wrap"><select id="earn-staff" onchange="renderEarnings()" class="field"><option value="ALL">All Staff</option></select></div>
+    <div class="max-w-6xl mx-auto w-full px-4 py-2.5 flex flex-wrap items-center gap-2.5">
+      <div id="earn-staff-wrap" class="w-full sm:w-60"><select id="earn-staff" onchange="renderEarnings()" class="field"><option value="ALL">All Staff</option></select></div>
       <div class="flex gap-2 overflow-x-auto hide-scroll" id="earn-chips">
         <button class="chip" data-r="TODAY" onclick="setEarnRange('TODAY')">Today</button>
         <button class="chip" data-r="YESTERDAY" onclick="setEarnRange('YESTERDAY')">Yesterday</button>
         <button class="chip on" data-r="MONTH" onclick="setEarnRange('MONTH')">This Month</button>
         <button class="chip" data-r="CUSTOM" onclick="setEarnRange('CUSTOM')">Manually</button>
       </div>
-      <div id="earn-custom" class="hidden grid grid-cols-2 gap-2">
+      <div id="earn-custom" class="hidden grid grid-cols-2 gap-2 w-full sm:w-auto">
         <div><p class="label mb-1">From</p><input type="date" id="earn-start" class="field" onchange="renderEarnings()"></div>
         <div><p class="label mb-1">To</p><input type="date" id="earn-end" class="field" onchange="renderEarnings()"></div>
       </div>
     </div>
   </div>
   <div class="flex-1 overflow-y-auto" id="earn-scroll">
-    <div class="max-w-3xl mx-auto w-full px-4 py-4 space-y-4">
+    <div class="max-w-6xl mx-auto w-full px-4 py-4 space-y-4">
       <div id="earn-staff-summary" class="hidden">
         <p class="label mb-2">Per staff</p>
         <div id="earn-staff-list" class="flex gap-2.5 overflow-x-auto hide-scroll pb-1"></div>
@@ -226,13 +241,13 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 <!-- ============ LAYER: MONTHLY SUMMARY ============ -->
 <div id="screen-months" class="layer">
   <header class="shrink-0 bg-[#0b1220] border-b border-[#223052]" style="padding-top:env(safe-area-inset-top)">
-    <div class="max-w-3xl mx-auto w-full px-4 h-14 flex items-center justify-between">
+    <div class="max-w-6xl mx-auto w-full px-4 h-14 flex items-center justify-between">
       <h2 class="font-extrabold text-base sm:text-lg flex items-center gap-2.5"><i class="fa-solid fa-calendar-days text-sky-400"></i> Monthly Summary</h2>
       <button onclick="closeLayer()" title="Close" class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-white flex items-center justify-center text-lg transition"><i class="fa-solid fa-xmark"></i></button>
     </div>
   </header>
   <div class="flex-1 overflow-y-auto">
-    <div class="max-w-3xl mx-auto w-full px-4 py-4 space-y-3" id="months-list"></div>
+    <div class="max-w-6xl mx-auto w-full px-4 py-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 items-start" id="months-list"></div>
   </div>
 </div>
 
@@ -281,17 +296,14 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 <div id="screen-security" class="layer" style="background:#fff;color:#0f172a">
   <div class="lt-hdr"><span class="ic">🔒</span><b>Security Password</b><button onclick="closeLayer()" aria-label="Close">×</button></div>
   <div class="flex-1 overflow-y-auto">
-    <div style="max-width:480px;margin:0 auto;padding:26px 24px 16px">
-      <div style="text-align:center;font-size:56px;margin-bottom:6px">🔒</div>
-      <h3 style="text-align:center;margin:0 0 6px;font-size:28px;font-weight:800;color:#0f172a">Security Password</h3>
-      <p id="sec-status" style="text-align:center;color:#94a3b8;font-size:15px;margin:0 0 22px"></p>
-      <button class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857;margin-bottom:12px;font-size:20px" onclick="startAdd('user')">➕ Add User</button>
-      <button class="lt-btn" style="background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;margin-bottom:22px;font-size:20px" onclick="startAdd('manager')">➕ Add Manager</button>
-      <div id="sec-list"></div>
+    <div style="max-width:820px;margin:0 auto;padding:14px 14px 22px">
+      <p id="sec-status" style="text-align:center;color:#64748b;font-size:13px;font-weight:700;margin:0 0 12px"></p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <button class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857;text-align:center;margin:0" onclick="startAdd('user')">➕ Add User</button>
+        <button class="lt-btn" style="background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;text-align:center;margin:0" onclick="startAdd('manager')">➕ Add Manager</button>
+      </div>
+      <div id="sec-list" class="sec-grid"></div>
     </div>
-  </div>
-  <div style="flex-shrink:0;padding:10px 24px calc(18px + env(safe-area-inset-bottom));background:#fff">
-    <button onclick="closeLayer()" style="display:block;width:100%;max-width:480px;margin:0 auto;background:#f8fafc;border:2px solid #e2e8f0;border-radius:22px;padding:18px;font-size:22px;font-weight:800;color:#64748b">↩️ Close</button>
   </div>
 </div>
 
@@ -299,15 +311,14 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
 <div id="screen-pwstep" class="layer" style="background:#fff;color:#0f172a;z-index:65">
   <div class="lt-hdr"><span class="ic" id="step-hic">🔒</span><b id="step-htitle">Add User</b><button onclick="closeLayer()" aria-label="Close">×</button></div>
   <div class="flex-1 overflow-y-auto">
-    <form onsubmit="saveStep(event)" style="max-width:480px;margin:0 auto;padding:30px 24px 24px">
-      <div id="step-ic" style="text-align:center;font-size:56px;margin-bottom:6px">👤</div>
-      <h3 id="step-title" style="text-align:center;margin:0 0 6px;font-size:28px;font-weight:800;color:#0f172a">Add User</h3>
-      <p id="step-sub" style="text-align:center;color:#94a3b8;font-size:15px;margin:0 0 26px">Enter username and password</p>
+    <form onsubmit="saveStep(event)" style="max-width:380px;margin:0 auto;padding:18px 18px 22px">
+      <div id="step-ic" style="text-align:center;font-size:34px;margin-bottom:2px">👤</div>
+      <h3 id="step-title" style="text-align:center;margin:0 0 4px;font-size:18px;font-weight:800;color:#0f172a">Add User</h3>
+      <p id="step-sub" style="text-align:center;color:#64748b;font-size:13px;margin:0 0 14px">Enter username and password</p>
       <input id="step-user" class="lt-in" placeholder="Username" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off">
       <input id="step-pass" type="text" class="lt-in" placeholder="Password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
-      <p id="step-err" class="hidden" style="color:#e11d48;font-size:13px;font-weight:700;margin:-4px 4px 12px"></p>
+      <p id="step-err" class="hidden" style="color:#e11d48;font-size:12px;font-weight:700;margin:-2px 2px 10px"></p>
       <button id="step-btn" type="submit" class="lt-btn" style="background:#ecfdf5;border-color:#10b981;color:#047857;text-align:center">✅ Save</button>
-      <button type="button" onclick="closeLayer()" class="lt-btn" style="background:#f8fafc;border-color:#e2e8f0;color:#64748b;text-align:center;margin-top:12px;font-size:20px">↩️ Cancel</button>
     </form>
   </div>
 </div>
@@ -341,9 +352,9 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
       </div>
       <div class="grid grid-cols-2 gap-2.5">
         <div><p class="label mb-1">Amount (OMR)</p><input type="number" step="0.001" min="0.001" id="order-amount" required oninput="previewReward()" placeholder="20.000" class="field"></div>
-        <div><p class="label mb-1">Pickup time</p><input type="datetime-local" id="order-pickup-time" required class="field"></div>
+        <div><p class="label mb-1">Notes / items</p><input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="field"></div>
       </div>
-      <div><p class="label mb-1">Notes / items</p><input type="text" id="order-notes" placeholder="e.g. 2kg Cake" class="field"></div>
+      <div><p class="label mb-1">Order date &amp; time</p><input type="datetime-local" id="order-pickup-time" required class="field"></div>
       <div class="rounded-xl bg-amber-400/10 border border-amber-400/30 px-3 py-2.5 flex justify-between items-center text-xs">
         <span class="text-slate-300 font-semibold">Is order ka reward</span>
         <span id="reward-preview" class="font-extrabold text-amber-400">0.000 OMR</span>
@@ -455,7 +466,12 @@ const splashStart = Date.now();
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const omr = n => (Number(n) || 0).toFixed(3);
-const reward = o => (Number(o.amount) || 0) >= REWARD_MIN ? REWARD_AMT : 0;
+// Order ki date = jo date order me daali gayi (nahi ho to banne ka time)
+const odate = o => { const t = o.pickupTime ? new Date(o.pickupTime).getTime() : NaN; return isNaN(t) ? (o.createdAt || Date.now()) : t; };
+// Manager ke order par reward / revenue nahi
+const earns = o => o.creatorRole !== 'admin' && !users.some(u => u.uid === (o.creatorUid || o.staffId) && u.role === 'admin');
+const reward = o => (earns(o) && (Number(o.amount) || 0) >= REWARD_MIN) ? REWARD_AMT : 0;
+const toLocalInput = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 const isAdmin = () => !!me && me.role === 'admin';
 const ownerKey = o => o.creatorUid || o.staffId || 'unknown';
 const canEdit = o => !!me && (o.creatorUid === me.uid || (isAdmin() && !o.creatorUid));
@@ -463,6 +479,7 @@ const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fmtTime = ts => new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const fmtDay = ts => new Date(ts).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+const fmtDT = ts => new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 const fmtPickup = v => v ? new Date(v).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'N/A';
 
 function toast(msg, type) {
@@ -539,6 +556,11 @@ async function checkSetup() {
   try { show = !(await tmo(db.collection('meta').doc('admin').get(), 8000)).exists; } catch (_) { show = false; }
   $('auth-setup').classList.toggle('hidden', !show);
   if (!show && authMode !== 'login') setAuthMode('login');
+}
+function authClose() {
+  if (authMode === 'register') return setAuthMode('login');
+  $('auth-user').value = ''; $('auth-pass').value = ''; authMsg('');
+  try { window.close(); } catch (_) {}
 }
 function authMsg(t) { const e = $('auth-err'); e.textContent = t; e.classList.toggle('hidden', !t); }
 function showAuth() { $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); checkSetup(); }
@@ -655,6 +677,7 @@ function renderHeader() {
   $('acc-user').textContent = '@' + (me.username || '');
   $('acc-role').textContent = isAdmin() ? '👑 Manager - sab orders dekh sakta hai' : '👤 User - sirf apne orders';
   $('today-label').textContent = isAdmin() ? 'Aaj ka hisab - sab staff' : 'Aaj ka hisab';
+  $('today-card').classList.toggle('hidden', isAdmin());
   $('filter-staff').parentElement.classList.toggle('grid-cols-2', isAdmin());
   $('filter-staff').parentElement.classList.toggle('grid-cols-1', !isAdmin());
   $('filter-staff').classList.toggle('hidden', !isAdmin());
@@ -809,7 +832,7 @@ async function adminRemove(uid) {
 
 // ================= Date filters =================
 function inRange(o, mode, startStr, endStr) {
-  const d = new Date(o.createdAt || Date.now()), now = new Date();
+  const d = new Date(odate(o)), now = new Date();
   if (mode === 'TODAY') return d.toDateString() === now.toDateString();
   if (mode === 'YESTERDAY') { const y = new Date(); y.setDate(now.getDate() - 1); return d.toDateString() === y.toDateString(); }
   if (mode === 'MONTH') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -823,15 +846,15 @@ function inRange(o, mode, startStr, endStr) {
 function setChips(containerId, mode) {
   document.querySelectorAll('#' + containerId + ' .chip').forEach(c => c.classList.toggle('on', c.dataset.r === mode));
 }
-function staffList() {
+function staffList(withMgr) {
   const map = new Map();
-  if (isAdmin()) users.forEach(u => map.set(u.uid, { id: u.uid, name: u.name }));
+  if (isAdmin()) users.filter(u => withMgr || u.role !== 'admin').forEach(u => map.set(u.uid, { id: u.uid, name: u.name }));
   else if (me) map.set(me.uid, { id: me.uid, name: me.name });
-  orders.forEach(o => { const k = ownerKey(o); if (!map.has(k)) map.set(k, { id: k, name: o.staffName || o.creatorName || 'Unknown' }); });
+  orders.filter(o => withMgr || earns(o)).forEach(o => { const k = ownerKey(o); if (!map.has(k)) map.set(k, { id: k, name: o.staffName || o.creatorName || 'Unknown' }); });
   return [...map.values()];
 }
-function fillStaffSelect(sel) {
-  const cur = sel.value, list = staffList();
+function fillStaffSelect(sel, withMgr) {
+  const cur = sel.value, list = staffList(withMgr);
   sel.innerHTML = '<option value="ALL">All Staff</option>' + list.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
   sel.value = list.some(s => s.id === cur) ? cur : 'ALL';
 }
@@ -844,12 +867,12 @@ function setHomeRange(r) {
 }
 function updateUI() {
   if (!me) return;
-  fillStaffSelect($('filter-staff'));
+  fillStaffSelect($('filter-staff'), true);
   fillStaffSelect($('earn-staff'));
   renderToday(); renderOrders(); renderEarnings(); renderMonths(); renderSecurity();
 }
 function renderToday() {
-  const t = orders.filter(o => inRange(o, 'TODAY'));
+  const t = orders.filter(o => earns(o) && inRange(o, 'TODAY'));
   $('today-orders').textContent = t.length;
   $('today-sales').textContent = omr(t.reduce((s, o) => s + (Number(o.amount) || 0), 0));
   $('today-earned').textContent = omr(t.reduce((s, o) => s + reward(o), 0));
@@ -860,7 +883,7 @@ function renderOrders() {
   const list = orders
     .filter(o => inRange(o, homeRange, $('home-start').value, $('home-end').value))
     .filter(o => (sid === 'ALL' || ownerKey(o) === sid) && (st === 'ALL' || o.status === st))
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    .sort((a, b) => odate(b) - odate(a));
   $('orders-count').textContent = `(${list.length})`;
   if (!list.length) { box.innerHTML = '<div class="col-span-full py-10 text-center text-slate-500 text-sm">Koi order nahi mila.</div>'; return; }
   box.innerHTML = list.map(o => {
@@ -879,7 +902,7 @@ function renderOrders() {
       </div>
       <div class="flex justify-between text-[11px] text-slate-400">
         <span><i class="fa-solid fa-phone"></i> ${esc(o.customerPhone)}</span>
-        <span><i class="fa-regular fa-clock"></i> ${fmtPickup(o.pickupTime)}</span>
+        <span><i class="fa-regular fa-calendar"></i> ${fmtDT(odate(o))}</span>
       </div>
       ${o.notes ? `<p class="text-[11px] text-slate-400 bg-[#0e1628] rounded-lg px-2.5 py-1.5"><i class="fa-solid fa-note-sticky text-amber-400"></i> ${esc(o.notes)}</p>` : ''}
       <div class="flex justify-between items-center pt-2.5 border-t border-[#223052]">
@@ -904,19 +927,20 @@ function openOrderModal(editId = null) {
     $('order-customer-name').value = o.customerName;
     $('order-customer-phone').value = o.customerPhone;
     $('order-amount').value = o.amount;
-    $('order-pickup-time').value = o.pickupTime || '';
+    $('order-pickup-time').value = o.pickupTime || toLocalInput(new Date(odate(o)));
     $('order-notes').value = o.notes || '';
   } else {
     $('form-add-order').reset();
     $('edit-order-id').value = '';
     title.innerHTML = '<i class="fa-solid fa-cart-plus text-amber-400"></i> Create New Order';
     btn.textContent = 'Save Order';
+    $('order-pickup-time').value = toLocalInput(new Date());
   }
   previewReward();
   openLayer('modal-order');
 }
 function closeOrderModal() { closeLayer(); }
-function previewReward() { $('reward-preview').textContent = omr(reward({ amount: $('order-amount').value })) + ' OMR'; }
+function previewReward() { $('reward-preview').textContent = omr(reward({ amount: $('order-amount').value, creatorRole: me && me.role })) + ' OMR'; }
 
 async function handleSaveOrder(e) {
   e.preventDefault();
@@ -925,19 +949,20 @@ async function handleSaveOrder(e) {
   const data = {
     customerName: $('order-customer-name').value.trim(),
     customerPhone: $('order-customer-phone').value.trim(),
-    amount, commission: reward({ amount }),
+    amount,
     pickupTime: $('order-pickup-time').value,
     notes: $('order-notes').value.trim()
   };
   closeLayer();
   try {
     if (editId) {
-      await db.collection('orders').doc(editId).update(data);
+      const o0 = orders.find(x => x.id === editId) || {};
+      await db.collection('orders').doc(editId).update({ ...data, commission: reward({ ...o0, amount }) });
     } else {
       const id = 'ord_' + Date.now();
       await db.collection('orders').doc(id).set({
-        ...data, id, status: 'Pending', createdAt: Date.now(),
-        creatorUid: me.uid, creatorName: me.name, staffId: me.uid, staffName: me.name
+        ...data, id, status: 'Pending', createdAt: Date.now(), commission: reward({ amount, creatorRole: me.role }),
+        creatorUid: me.uid, creatorName: me.name, creatorRole: me.role, staffId: me.uid, staffName: me.name
       });
     }
   } catch (err) { console.error(err); toast('Save nahi hua: ' + authError(err), 'err'); }
@@ -983,9 +1008,8 @@ function orderBox(o, showStaff) {
       <p class="font-bold text-[13px] truncate">${esc(o.customerName)}</p>
       <p class="font-extrabold text-emerald-400 text-[13px] shrink-0">${omr(o.amount)}</p>
     </div>
-    <p class="meta"><i class="fa-regular fa-clock"></i> ${fmtTime(o.createdAt || Date.now())}</p>
+    <p class="meta"><i class="fa-regular fa-clock"></i> ${fmtTime(odate(o))}</p>
     <p class="meta"><i class="fa-solid fa-phone"></i> ${esc(o.customerPhone)}</p>
-    <p class="meta"><i class="fa-solid fa-box"></i> Pickup ${fmtPickup(o.pickupTime)}</p>
     ${o.notes ? `<p class="meta"><i class="fa-solid fa-note-sticky"></i> ${esc(o.notes)}</p>` : ''}
     ${showStaff ? `<p class="meta"><i class="fa-solid fa-user-tie"></i> ${esc(o.staffName || o.creatorName)}</p>` : ''}
     <div class="flex justify-between items-center mt-2 pt-2 border-t border-[#223052]">
@@ -998,12 +1022,12 @@ function orderBox(o, showStaff) {
 function renderEarnings() {
   if (!$('screen-earnings').classList.contains('open')) return;
   const sid = isAdmin() ? $('earn-staff').value : 'ALL';
-  const ranged = orders.filter(o => inRange(o, earnRange, $('earn-start').value, $('earn-end').value));
-  const list = ranged.filter(o => sid === 'ALL' || ownerKey(o) === sid).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const ranged = orders.filter(earns).filter(o => inRange(o, earnRange, $('earn-start').value, $('earn-end').value));
+  const list = ranged.filter(o => sid === 'ALL' || ownerKey(o) === sid).sort((a, b) => odate(b) - odate(a));
 
   // per-staff cards (admin, all staff)
   const wrap = $('earn-staff-summary');
-  if (isAdmin() && sid === 'ALL') {
+  if (isAdmin() && sid === 'ALL' && staffList().length) {
     wrap.classList.remove('hidden');
     $('earn-staff-list').innerHTML = staffList().map(s => {
       const so = ranged.filter(o => ownerKey(o) === s.id);
@@ -1023,15 +1047,15 @@ function renderEarnings() {
     return;
   }
   const days = new Map();
-  list.forEach(o => { const k = ymd(new Date(o.createdAt || Date.now())); if (!days.has(k)) days.set(k, []); days.get(k).push(o); });
+  list.forEach(o => { const k = ymd(new Date(odate(o))); if (!days.has(k)) days.set(k, []); days.get(k).push(o); });
   $('earn-days').innerHTML = [...days.entries()].map(([k, arr]) => {
     const de = arr.reduce((a, o) => a + reward(o), 0);
     return `<section>
       <div class="flex items-center justify-between mb-2.5 px-0.5">
-        <p class="font-extrabold text-sm"><i class="fa-regular fa-calendar text-amber-400"></i> ${fmtDay(arr[0].createdAt || Date.now())}</p>
+        <p class="font-extrabold text-sm"><i class="fa-regular fa-calendar text-amber-400"></i> ${fmtDay(odate(arr[0]))}</p>
         <p class="text-[11px] font-bold text-slate-400">${arr.length} orders · <span class="text-amber-400">+${omr(de)} OMR</span></p>
       </div>
-      <div class="grid grid-cols-2 gap-2.5">${arr.map(o => orderBox(o, sid === 'ALL' && isAdmin())).join('')}</div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">${arr.map(o => orderBox(o, sid === 'ALL' && isAdmin())).join('')}</div>
     </section>`;
   }).join('');
 }
@@ -1043,8 +1067,8 @@ function renderMonths(force) {
   const groups = new Map();
   const now = new Date(), curKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
   groups.set(curKey, []);
-  [...orders].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).forEach(o => {
-    const d = new Date(o.createdAt || Date.now()), k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  orders.filter(earns).sort((a, b) => odate(b) - odate(a)).forEach(o => {
+    const d = new Date(odate(o)), k = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(o);
   });
