@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ash Rewards">
-<title>Ash Bakes - Reward Tracker v22</title>
+<title>Ash Bakes - Reward Tracker v23</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -91,6 +91,22 @@ input[type=date],input[type=datetime-local]{color-scheme:dark}
   .s-title{margin-top:12px;font-size:22px}.s-sub{margin-top:2px;font-size:11px}.s-bar{margin-top:12px}
   .lt-hdr{padding-top:calc(5px + env(safe-area-inset-top));padding-bottom:5px}
   .overlay{padding:8px}
+}
+
+/* v23 - Landscape + all screens */
+html,body{min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.layer{height:100vh;height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-left:max(env(safe-area-inset-left),0px);padding-right:max(env(safe-area-inset-right),0px)}
+.layer>*{min-height:0}
+.overlay{max-height:100vh;max-height:100dvh}
+@media (min-width:1024px){.layer>*{max-width:1100px;width:100%;margin-left:auto;margin-right:auto}}
+@media (orientation:landscape) and (max-height:520px){
+  #app main{padding-top:8px;padding-bottom:16px}
+  #app header>div{padding-top:6px;padding-bottom:6px}
+  .layer{overflow-y:auto}
+  .overlay>*{max-height:none}
+  .btn{padding-top:9px;padding-bottom:9px}
+  .field{padding-top:8px;padding-bottom:8px}
+  .sec-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -469,7 +485,13 @@ const omr = n => (Number(n) || 0).toFixed(3);
 // Order ki date = jo date order me daali gayi (nahi ho to banne ka time)
 const odate = o => { const t = o.pickupTime ? new Date(o.pickupTime).getTime() : NaN; return isNaN(t) ? (o.createdAt || Date.now()) : t; };
 // Manager ke order par reward / revenue nahi
-const earns = o => o.creatorRole !== 'admin' && !users.some(u => u.uid === (o.creatorUid || o.staffId) && u.role === 'admin');
+const earns = o => {
+  if (o.creatorRole) return o.creatorRole !== 'admin';
+  const k = o.creatorUid || o.staffId;
+  if (me && k === me.uid) return me.role !== 'admin';
+  const u = users.find(x => x.uid === k);
+  return !!u && !!u.role && u.role !== 'admin';
+};
 const reward = o => (earns(o) && (Number(o.amount) || 0) >= REWARD_MIN) ? REWARD_AMT : 0;
 const toLocalInput = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 const isAdmin = () => !!me && me.role === 'admin';
@@ -609,15 +631,15 @@ async function bootSession() {
   if (!ses || !ses.u) { endSession(); showAuth(); hideSplash(); return; }
   try {
     // Pehle saved profile se turant khol do (offline/slow me bhi atke nahi); verify background me hota hai
-    if (ses.p && ses.p.hash === ses.h) { await startSession({ uid: ses.u, ...ses.p }); return; }
+    if (ses.p && ses.p.hash === ses.h) { await startSession({ ...ses.p, uid: ses.u }); return; }
     const snap = await Promise.race([db.collection('users').doc(ses.u).get(), new Promise((_, rj) => setTimeout(() => rj({ message: 'Server se connect nahi hua' }), 7000))]);
     const d = snap.exists ? snap.data() : null;
     if (!d || d.hash !== ses.h) { clearSes(); endSession(); showAuth(); hideSplash(); return; }
-    await startSession({ uid: ses.u, ...d });
+    await startSession({ ...d, uid: ses.u });
   } catch (err) {
     console.error(err);
     toast(authError(err), 'err');
-    endSession(); showAuth(); hideSplash();
+    endSession(); showAuth(); hideSplash();   // saved session delete nahi hota - dobara refresh par wapas khulega
   }
 }
 
@@ -628,13 +650,14 @@ async function startSession(profile) {
   if (profileUnsub) profileUnsub();
   profileUnsub = db.collection('users').doc(me.uid).onSnapshot(s => {
     if (!me || selfChange) return;
+    if (!s.exists && s.metadata && s.metadata.fromCache) return;
     if (!s.exists || s.data().hash !== me.hash) {   // remove ho gaya ya password badal gaya
       toast(s.exists ? 'Password badal gaya - dobara login karein' : 'Account remove ho gaya hai', 'err');
       doLogout();
       return;
     }
     const prevRole = me.role;
-    me = { uid: me.uid, ...s.data() };
+    me = { ...s.data(), uid: me.uid };
     setSes(me.uid, me.hash, s.data());
     renderHeader();
     if (prevRole !== me.role) subscribeData(); else updateUI();
@@ -663,7 +686,7 @@ function subscribeData() {
       users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
       updateUI();
     }, err => console.error(err)));
-  } else users = [{ uid: me.uid, name: me.name }];
+  } else users = [{ uid: me.uid, name: me.name, role: me.role }];
 }
 
 function renderHeader() {
